@@ -196,6 +196,8 @@ app.get('/arch', (req, res) => {
     return res.redirect('/applications')
   } 
   res.render('archive', {
+    session: req.session,
+    role: req.session.role,
     title: 'Archive'
   });
 });
@@ -206,6 +208,8 @@ app.get('/base', (req, res) => {
     return res.redirect('/applications')
   } 
   res.render('base', {
+    session: req.session,
+    role: req.session.role,
     title: 'Base of users'
   });
 });
@@ -217,6 +221,8 @@ app.get('/create', (req, res) => {
     return res.redirect('/manager')
   }
   res.render('creating', {
+    session: req.session,
+    role: req.session.role,
     title: 'Create request'
   });
 });
@@ -259,6 +265,8 @@ app.get('/edit', async (req, res) => {
     }
 
     res.render('editing', {
+      session: req.session,
+      role: req.session.role,
       title: 'Редактирование заявки',
       request: request,
       id: id
@@ -315,6 +323,8 @@ app.get('/repeat', async (req, res) => {
     const originalRequest = await db.GetRequestById(requestId); 
     console.log(originalRequest)
     res.render('repeat', {
+      session: req.session,
+      role: req.session.role,
       title: 'Повторная заявка',
       originalRequest: originalRequest,
     });
