@@ -1,0 +1,11 @@
+{{> head}}
+<body>
+    {{#unless isAuthPage}}
+        {{> navbar}}
+    {{/unless}}
+    <div class="container">
+        {{{body}}}
+    </div>
+    <script src="/main.js"></script>
+</body>
+</html>

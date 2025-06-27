@@ -1,0 +1,122 @@
+<head>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: url('/images/bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .edit-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-width: 900px;
+      height: 100%;
+      padding: 4rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin: 0 auto;
+      box-sizing: border-box;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .edit-title {
+      margin-bottom: 2rem;
+      font-size: 2.5rem;
+      color: #faf3eb;
+    }
+
+    .input-field input,
+    .input-field textarea,
+    .input-field label {
+      color: #fff;
+    }
+
+    .input-field input:focus,
+    .input-field textarea:focus {
+      border-bottom: 1px solid #faf3eb !important;
+      box-shadow: 0 1px 0 0 #faf3eb !important;
+    }
+
+    .submit-btn {
+      margin-top: 1.5rem;
+      background-color: #faf3eb;
+      color: #0b1957;
+      width: 100%;
+    }
+
+    .submit-btn:hover {
+      background-color: #e0dbd2;
+    }
+
+    .card-content {
+      padding: 0;
+    }
+  </style>
+</head>
+
+<div class="edit-container">
+  <h1 class="edit-title">Редактирование заявки</h1>
+  <form class="edit-form" action="/edit" method="POST" style="width: 100%; max-width: 600px;">
+    <div class="input-field">
+      <input id="title" name="title" type="text" class="validate" required>
+      <label for="title">Название</label>
+    </div>
+
+    <div class="input-field">
+      <input id="quantity" name="quantity" type="number" class="validate" min="1" required>
+      <label for="quantity">Количество</label>
+    </div>
+
+    <div class="input-field">
+      <input id="price" name="price" type="number" class="validate" min="0" step="0.01">
+      <label for="price">Цена</label>
+    </div>
+
+    <div class="input-field">
+      <input id="link" name="link" type="url" class="validate">
+      <label for="link">Ссылка</label>
+    </div>
+
+    <div class="input-field">
+      <input id="date" name="date" type="text" class="datepicker">
+      <label for="date">Желаемая дата</label>
+    </div>
+
+    <div class="input-field">
+      <textarea id="comment" name="comment" class="materialize-textarea"></textarea>
+      <label for="comment">Комментарий</label>
+    </div>
+
+    <button class="btn waves-effect waves-light submit-btn" type="submit">
+      СОХРАНИТЬ ИЗМЕНЕНИЯ
+    </button>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const elems = document.querySelectorAll('.datepicker');
+    M.Datepicker.init(elems, {
+      format: 'dd.mm.yyyy',
+      autoClose: true,
+      i18n: {
+        cancel: 'Отмена',
+        clear: 'Очистить',
+        done: 'Выбрать',
+        months: ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+        monthsShort: ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'],
+        weekdays: ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'],
+        weekdaysShort: ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'],
+        weekdaysAbbrev: ['В','П','В','С','Ч','П','С']
+      }
+    });
+
+    M.updateTextFields();
+  });
+</script>

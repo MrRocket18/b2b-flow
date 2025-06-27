@@ -1,0 +1,7 @@
+.env
+node_modules
+vendor/logs/
+app.json
+img
+node.js
+public/css/

@@ -1,0 +1,110 @@
+<style>
+  .navbar {
+   display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(90deg, #0b19576e 0%, #1c2c8678 50%, #3a49b173 100%);
+    color: #fff;
+    font-size: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+
+  .navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .navbar-logo {
+    height: 100px;
+    margin-top: 26px;
+  }
+
+  .navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .navbar-links a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 26px;
+  }
+
+  .navbar-links a:hover {
+    text-decoration: underline;
+  }
+
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-size: 26px;
+  }
+
+  .navbar-role {
+    font-weight: bold;
+    text-transform: uppercase;
+        color: #fedcd1;
+  }
+
+  .navbar-name {
+    
+    color: #e0e0e0;
+  }
+
+  .navbar-logout-form {
+    margin: 0;
+  }
+
+  .navbar-logout-button {
+    background: #ff4d4d00;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .navbar-logout-button:hover {
+    background: #0b1957;
+  }
+</style>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <a href="/">
+      <img src="/images/logo.png" alt="Logo" class="navbar-logo">
+    </a>
+
+    {{#if @root.session}}
+    <div class="navbar-links">
+      {{#if (eq @root.session.role "User")}}
+        <a href="/applications">Главная</a>
+      {{else if (eq @root.session.role "Admin")}}
+        <a href="/manager">Главная</a>
+        <a href="/arch">Архив</a>
+        <a href="/base">Пользователи</a>
+      {{/if}}
+    </div>
+    {{/if}}
+  </div>
+
+  {{#if @root.session}}
+  <div class="navbar-right">
+    <span class="navbar-role">{{@root.session.role}}</span>
+    <span class="navbar-name">{{@root.session.name}}</span>
+    <form action="/logout" method="get" class="navbar-logout-form">
+      <button type="submit" class="navbar-logout-button">
+        <i class="material-icons">logout</i>
+      </button>
+    </form>
+  </div>
+  {{/if}}
+</nav>

@@ -1,0 +1,102 @@
+{{!-- views/archive.hbs --}}
+
+<div class="archive-container">
+  <div class="header-section">
+    <h1 class="page-title">Архив заказов</h1>
+    
+    <div class="filter-section">
+      <div class="filter-item active">
+        <span>Все полученные заказы</span>
+      </div>
+      <div class="filter-item">
+        <span>За последний месяц</span>
+      </div>
+      <div class="filter-item">
+        <span>За последний год</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="orders-table">
+    <table class="highlight">
+      <thead>
+        <tr>
+          <th>ID Заказа</th>
+          <th>Дата доставки</th>
+          <th>Пользователь</th>
+          <th>Сумма</th>
+          <th>Товары</th>
+          <th>Статус</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each archive}}
+          <tr>
+            <td>{{id}}</td>
+            <td>{{delivery_date}}</td>
+            <td>{{user}}</td>
+            <td>{{total}} ₽</td>
+            <td>
+              {{#each items}}
+                <a href="{{this.link}}" class="product-link" target="_blank">{{this.name}}</a>{{#unless @last}}, {{/unless}}
+              {{/each}}
+            </td>
+            <td><span class="status-badge received">Получен</span></td>
+            <td>
+              <a class="btn-flat waves-effect tooltipped modal-trigger"
+                 href="#comment-modal"
+                 data-tooltip="Просмотр"
+                 data-order-id="{{id}}"
+                 data-comment="{{comment}}">
+                <i class="material-icons">visibility</i>
+              </a>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="comment-modal" class="modal">
+  <div class="modal-content">
+    <h4>Комментарий к заказу <span id="modal-order-id"></span></h4>
+    <div class="comment-content">
+      <p>Здесь будет отображаться комментарий к выбранному заказу.</p>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Закрыть</a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    M.AutoInit();
+
+    const tooltips = document.querySelectorAll('.tooltipped');
+    M.Tooltip.init(tooltips, { position: 'top' });
+
+    const modals = document.querySelectorAll('.modal');
+    M.Modal.init(modals);
+
+    document.querySelectorAll('.filter-item').forEach(item => {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('.modal-trigger').forEach(trigger => {
+      trigger.addEventListener('click', function () {
+        const orderId = this.getAttribute('data-order-id');
+        const comment = this.getAttribute('data-comment');
+        document.getElementById('modal-order-id').textContent = '#' + orderId;
+        document.querySelector('.comment-content p').textContent = comment || 'Комментарий отсутствует.';
+      });
+    });
+  });
+</script>

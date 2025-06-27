@@ -1,0 +1,29 @@
+{
+  "name": "purchase",
+  "version": "1.0.0",
+  "main": "progress.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.5.0",
+    "express": "",
+    "express-fileupload": "",
+    "express-handlebars": "",
+    "express-session": "",
+    "fs-extra": "",
+    "handlebars-helpers": "^0.10.0",
+    "mysql2": "^3.14.1",
+    "nodemon": "^3.1.10",
+    "path": "",
+    "urlencode": ""
+  }
+}
