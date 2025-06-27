@@ -127,6 +127,47 @@ export async function GetRequestById(id) {
     throw error; 
   }
 }
+export async function getRequestById(id) {
+  try {
+    const [rows] = await pool.query(
+      'SELECT item_name, count, price, link, desired_date, comment FROM Request WHERE id = ?',
+      [id]
+    );
+
+    if (rows.length === 0) return null;
+
+    const request = rows[0];
+
+    return {
+      ...request,
+      price: parseFloat(request.price), // ✅ Приводим к числу
+      desired_date: formatDateToDDMMYYYY(request.desired_date) // 📅 Оставляем формат ДД.ММ.ГГГГ
+    };
+  } catch (error) {
+    console.error('Ошибка при получении заявки из БД:', error);
+    throw error;
+  }
+}
+
+export async function updateRequestById(id, updatedData) {
+    try {
+        const count = Number(updatedData.count);
+        const price = Number(updatedData.price);
+
+        const desiredDate = formatDate(updatedData.desired_date);
+
+        const query = `UPDATE Request SET item_name = ?, count = ?, price = ?, link = ?, desired_date = ?, comment = ? WHERE id = ?`;
+
+        const values = [updatedData.item_name, count, price, updatedData.link, desiredDate, updatedData.comment, id];
+
+        const [result] = await pool.execute(query, values);
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Ошибка при обновлении заявки:', error);
+        throw error;
+    }
+}
 function formatDateToDDMMYYYY(date) {
         if (!(date instanceof Date) || isNaN(date.getTime())) {
             return '';

@@ -244,16 +244,64 @@ app.post('/create', async (req, res) => {
   }
 });
 
-app.get('/edit', (req, res) => {
-  if(req.session.role!="User")
-  {
-    console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
-    return res.redirect('/manager')
+app.get('/edit', async (req, res) => {
+  const { id } = req.query;
+
+  if (!id || isNaN(Number(id))) {
+    return res.status(400).send('Некорректный ID');
   }
-  res.render('editing', {
-    title: 'Editing'
-  });
+
+  try {
+    const request = await db.getRequestById(Number(id));
+
+    if (!request) {
+      return res.status(404).send('Заявка не найдена');
+    }
+
+    res.render('editing', {
+      title: 'Редактирование заявки',
+      request: request,
+      id: id
+    });
+
+  } catch (error) {
+    console.error('Ошибка при загрузке заявки:', error);
+    res.status(500).send('Ошибка сервера');
+  }
 });
+
+app.post('/edit', async (req, res) => {
+    console.log('req.body:', req.body); 
+    const id = req.body.id;
+    console.log('ID:', id); 
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).json({ error: 'Неверный ID' });
+    }
+
+    try {
+        const updatedData = {
+            item_name: req.body.item_name,
+            count: Number(req.body.count),
+            price: Number(req.body.price),
+            link: req.body.link,
+            desired_date: req.body.desired_date,
+            comment: req.body.comment
+        };
+
+        const success = await db.updateRequestById(Number(id), updatedData);
+
+        if (success) {
+            return res.redirect('/applications')
+        } else {
+            return res.status(500).json({ error: 'Не удалось обновить заявку' });
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении заявки:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+
 
 app.get('/repeat', async (req, res) => { 
   if (req.session.role !== "User") {

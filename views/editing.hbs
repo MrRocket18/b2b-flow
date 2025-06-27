@@ -63,40 +63,44 @@
 <div class="edit-container">
   <h1 class="edit-title">Редактирование заявки</h1>
   <form class="edit-form" action="/edit" method="POST" style="width: 100%; max-width: 600px;">
-    <div class="input-field">
-      <input id="title" name="title" type="text" class="validate" required>
-      <label for="title">Название</label>
-    </div>
+  <!-- Скрытое поле с id -->
+  <input id = "id" type="hidden" name="id" value="{{id}}">
 
-    <div class="input-field">
-      <input id="quantity" name="quantity" type="number" class="validate" min="1" required>
-      <label for="quantity">Количество</label>
-    </div>
+  <!-- Остальные поля формы -->
+  <div class="input-field">
+    <input id="item_name" name="item_name" type="text" class="validate" value="{{request.item_name}}" required>
+    <label for="item_name">Название</label>
+  </div>
 
-    <div class="input-field">
-      <input id="price" name="price" type="number" class="validate" min="0" step="0.01">
-      <label for="price">Цена</label>
-    </div>
+  <div class="input-field">
+    <input id="count" name="count" type="number" class="validate" min="1" value="{{request.count}}" required>
+    <label for="count">Количество</label>
+  </div>
 
-    <div class="input-field">
-      <input id="link" name="link" type="url" class="validate">
-      <label for="link">Ссылка</label>
-    </div>
+  <div class="input-field">
+    <input id="price" name="price" type="number" class="validate" min="0" step="0.01" value="{{request.price}}">
+    <label for="price">Цена</label>
+  </div>
 
-    <div class="input-field">
-      <input id="date" name="date" type="text" class="datepicker">
-      <label for="date">Желаемая дата</label>
-    </div>
+  <div class="input-field">
+    <input id="link" name="link" type="url" class="validate" value="{{request.link}}">
+    <label for="link">Ссылка</label>
+  </div>
 
-    <div class="input-field">
-      <textarea id="comment" name="comment" class="materialize-textarea"></textarea>
-      <label for="comment">Комментарий</label>
-    </div>
+  <div class="input-field">
+    <input id="desired_date" name="desired_date" type="text" class="datepicker" value="{{request.desired_date}}">
+    <label for="desired_date">Желаемая дата</label>
+  </div>
 
-    <button class="btn waves-effect waves-light submit-btn" type="submit">
-      СОХРАНИТЬ ИЗМЕНЕНИЯ
-    </button>
-  </form>
+  <div class="input-field">
+    <textarea id="comment" name="comment" class="materialize-textarea">{{request.comment}}</textarea>
+    <label for="comment">Комментарий</label>
+  </div>
+
+  <button class="btn waves-effect waves-light submit-btn" type="submit">
+    СОХРАНИТЬ ИЗМЕНЕНИЯ
+  </button>
+</form>
 </div>
 
 <script>
