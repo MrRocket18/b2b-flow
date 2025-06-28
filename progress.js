@@ -169,20 +169,18 @@ app.get('/applications', async (req, res) => {
   }
 });
 
-app.get('/manager', (req, res) => {
+app.get('/manager', async (req, res) => {
   if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications');
   } 
-
   try { 
-    //const requests = await db.GetRequests();
-
+    const requests = await db.GetAllRequest();
     res.render('all_applic', {
       session: req.session,
       role: req.session.role,
       title: 'My requests',
-      //requests
+      requests
     });
   } catch (error) { 
     console.error("Ошибка при получении заявок:", error);
@@ -190,27 +188,31 @@ app.get('/manager', (req, res) => {
   }
 });
 
-app.get('/arch', (req, res) => {
+app.get('/arch', async (req, res) => {
   if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications')
   } 
+  const arch = await db.GetArchived();
   res.render('archive', {
     session: req.session,
     role: req.session.role,
-    title: 'Archive'
+    title: 'Archive',
+    arch:arch
   });
 });
 
-app.get('/base', (req, res) => {
+app.get('/base', async (req, res) => {
   if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications')
   } 
+  const base = await db.getAllUsersWithStats();
   res.render('base', {
     session: req.session,
     role: req.session.role,
-    title: 'Base of users'
+    title: 'Base of users',
+    base: base
   });
 });
 
@@ -314,49 +316,46 @@ app.post('/edit', async (req, res) => {
     }
 });
 
+app.post('/delete', async (req, res) => {
+    const id = req.body.id;
 
-
-app.get('/repeat', async (req, res) => { 
-  if (req.session.role != 0) {
-    console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`);
-    return res.redirect('/manager');
-  }
-
-  const requestId = req.query.id;
-
-  try {
-    const originalRequest = await db.GetRequestById(requestId); 
-    console.log(originalRequest)
-    res.render('repeat', {
-      session: req.session,
-      role: req.session.role,
-      title: 'Повторная заявка',
-      originalRequest: originalRequest,
-    });
-  } catch (error) {
-    console.error('Ошибка при получении данных заявки:', error);
-    res.status(500).send('Ошибка сервера');
-  }
-});
-app.post('/repeat',  async (req, res) => {
-
-  const user_id = req.session.uid; 
-  const {item_name, price, count, link, desired_date, comment} = req.body;
-  console.log(item_name, price, count, link, desired_date, comment)
-  try{
-     const result = await db.createRequest({user_id, item_name, count, price, link, desired_date, comment});
-
-     if (result.success) {
-      return res.redirect("/applications")
-    } else {
-      return res.status(500).json({ success: false, message: result.message });
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).send('Неверный ID');
     }
-  }
-  catch(error) {
-    console.error('Ошибка при отпраки повторной заявки:', error);
-    res.status(500).send('Ошибка сервера');
-  }
+
+    try {
+        const success = await db.deleteRequestById(Number(id));
+
+        if (success) {
+            return res.redirect('/applications'); 
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении заявки:', error);
+        return res.status(500).send('Ошибка сервера');
+    }
 });
+
+app.post('/delete-user', async (req, res) => {
+    const id = req.body.id;
+
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).send('Неверный ID');
+    }
+
+    try {
+        const success = await db.deleteUsers(Number(id));
+
+        if (success) {
+            return res.redirect('/base'); 
+        } else {
+            return res.status(404).send('Пользователь не найден');
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении пользователя:', error);
+        return res.status(500).send('Ошибка сервера');
+    }
+});
+
 app.get('/logout',(req,res)=> {
   req.session.role = "";
   req.session.uid = undefined;

@@ -168,6 +168,99 @@ export async function updateRequestById(id, updatedData) {
         throw error;
     }
 }
+
+export async function deleteRequestById(id) {
+    try {
+        const [result] = await pool.execute(
+            'DELETE FROM Request WHERE id = ?', [id]
+        );
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Ошибка при удалении заявки из БД:', error);
+        throw error;
+    }
+}
+
+export async function GetArchived() {
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+        r.ID,
+        DATE_FORMAT(r.delivery_date, '%d.%m.%Y') AS delivery_date,
+        r.comment,
+        CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
+        r.price * r.count AS total,
+        r.item_name,
+        r.link
+      FROM Request r
+      JOIN Users u ON r.user_id = u.ID
+      WHERE r.status = 'Получен'
+      ORDER BY r.delivery_date DESC`
+    );
+    return rows;
+  } catch (error) {
+    console.error("Ошибка при получении архивных заказов:", error);
+    throw error;
+  }
+}
+
+export async function getAllUsersWithStats() {
+  try {
+    const [users] = await pool.query(
+      `SELECT 
+        u.ID,
+        CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
+        u.email,
+        u.telphone,
+        COUNT(r.ID) as order_count, 
+        u.role
+      FROM Users u
+      LEFT JOIN Request r ON u.ID = r.user_id
+      GROUP BY u.ID`
+    );
+    return users
+  } catch (error) {
+    console.error('Ошибка при получении пользователей:', error);
+    throw error;
+  }
+}
+
+export async function deleteUsers(id) {
+  try {
+    const [result] = await pool.query('DELETE FROM Users WHERE id = ?', [id]);
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error('Ошибка при удалении пользователя:', error.message);
+    throw error;
+  }
+}
+
+export async function GetAllRequest() {
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+        r.ID,
+        r.user_id,
+        CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
+        r.item_name,
+        r.count,
+        r.price,
+        r.link,
+        r.status,
+        DATE_FORMAT(r.desired_date, '%d.%m.%Y') AS desired_date,
+        DATE_FORMAT(r.delivery_date, '%d.%m.%Y') AS delivery_date,
+        r.comment
+      FROM Request r
+      JOIN Users u ON r.user_id = u.ID`
+    );
+    return rows;
+  } catch (error) {
+    console.error('Ошибка при получении данных о товаре по ID:', error);
+    throw error; 
+  }
+}
+
 function formatDateToDDMMYYYY(date) {
         if (!(date instanceof Date) || isNaN(date.getTime())) {
             return '';

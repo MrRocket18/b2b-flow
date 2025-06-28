@@ -76,29 +76,30 @@
     background: #0b1957;
   }
 </style>
-
+{{#if @root.session}}
 <nav class="navbar">
   <div class="navbar-left">
     <a href="/">
       <img src="/images/logo.png" alt="Logo" class="navbar-logo">
     </a>
-
-    {{#if @root.session}}
     <div class="navbar-links">
-      {{#if (eq @root.session.role "User")}}
+      {{#if (eq @root.session.role 0)}}
         <a href="/applications">Главная</a>
-      {{else if (eq @root.session.role "Admin")}}
+      {{else if (eq @root.session.role 1)}}
         <a href="/manager">Главная</a>
         <a href="/arch">Архив</a>
         <a href="/base">Пользователи</a>
       {{/if}}
     </div>
-    {{/if}}
   </div>
-
-  {{#if @root.session}}
   <div class="navbar-right">
-    <span class="navbar-role">{{@root.session.role}}</span>
+    <span class="navbar-role">
+      {{#if (eq @root.session.role 0)}}
+        <p> Пользователь</p>
+      {{else}}
+        <p> Администратор</p>
+      {{/if}}
+    </span>
     <span class="navbar-name">{{@root.session.name}}</span>
     <form action="/logout" method="get" class="navbar-logout-form">
       <button type="submit" class="navbar-logout-button">
@@ -106,5 +107,5 @@
       </button>
     </form>
   </div>
-  {{/if}}
 </nav>
+{{/if}}

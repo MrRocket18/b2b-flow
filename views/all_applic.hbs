@@ -56,36 +56,38 @@
     </thead>
     <tbody>
       {{#each requests}}
-      <tr>
-        <td>{{item_name}}</td>
-        <td>{{count}}</td>
-        <td>{{price}} ₽</td>
-        <td>
-          {{#if link}}
-            <a href="{{link}}" target="_blank" class="btn-flat">Ссылка</a>
-          {{else}}
-            —
-          {{/if}}
-        </td>
-        <td>{{desired_date}}</td>
-        <td>
-          <a href="/users/{{user_id}}" class="user-id-link">#{{user_id}}</a>
-        </td>
-        <td>
-          <span class="status-badge {{lowercase status}}">{{status}}</span>
-        </td>
-        <td>{{delivery_date}}</td>
-        <td>
-          <a href="#" class="btn-floating btn-small waves-effect waves-light blue" title="Комментарий">
-            <i class="material-icons">comment</i>
-          </a>
-        </td>
-        <td>
-          <a href="/edit?id={{id}}" class="btn-floating btn-small waves-effect waves-light grey" title="Редактировать">
-            <i class="material-icons">edit</i>
-          </a>
-        </td>
-      </tr>
+        {{#unless (eq status "Получен")}}
+          <tr>
+            <td>{{item_name}}</td>
+            <td>{{count}}</td>
+            <td>{{price}} ₽</td>
+            <td>
+              {{#if link}}
+                <a href="{{link}}" target="_blank" class="btn-flat">Ссылка</a>
+              {{else}}
+                —
+              {{/if}}
+            </td>
+            <td>{{desired_date}}</td>
+            <td>
+              <a href="/users/{{user_id}}" class="user-id-link">{{user_fullname}}</a>
+            </td>
+            <td>
+              <span class="status-badge {{lowercase status}}">{{status}}</span>
+            </td>
+            <td>{{delivery_date}}</td>
+            <td>
+              <a href="#" class="btn-floating btn-small waves-effect waves-light blue" title="Комментарий">
+                <i class="material-icons">comment</i>
+              </a>
+            </td>
+            <td>
+              <a href="/edit?id={{ID}}" class="btn-floating btn-small waves-effect waves-light grey" title="Редактировать">
+                <i class="material-icons">edit</i>
+              </a>
+            </td>
+          </tr>
+          {{/unless}}
       {{/each}}
     </tbody>
   </table>

@@ -115,12 +115,22 @@
           <td>{{comment}}</td>
           <td>
             <div style="display: flex; flex-direction: column; gap: 5px;">
+              <!-- КНОПКА РЕДАКТИРОВАНИЯ -->
               <a href="/edit?id={{ID}}" class="btn-small waves-effect waves-light indigo darken-4" title="Редактировать">
                 <i class="material-icons">edit</i>
               </a>
-              <a href="/repeat?id={{ID}}" class="btn-small waves-effect waves-light indigo darken-4" title="Повторить заявку">
-                <i class="material-icons">replay</i>
-              </a>
+
+              <!-- КНОПКА УДАЛЕНИЯ -->
+              <form action="/delete" method="POST" style="display: inline;">
+                <input id  = "id_delete" type="hidden" name="id" value="{{ID}}">
+                <button 
+                  type="submit" 
+                  class="btn-small waves-effect waves-light indigo darken-4" 
+                  title="Удалить заявку"
+                  onclick="return confirm('Вы уверены, что хотите удалить эту заявку?')">
+                  <i class="material-icons">delete</i>
+                </button>
+              </form>
             </div>
           </td>
         </tr>
