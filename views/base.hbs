@@ -1,32 +1,26 @@
-<div class="users-container">
-  <div class="header-section" style="display: flex; justify-content: space-between; align-items: center;">
-    <div>
-      <h1 class="page-title">База пользователей</h1>
+{{!-- views/base.hbs --}}
 
+<div class="users-page-container">
+  <div class="header-section">
+    <h1 class="page-title">База пользователей</h1>
+
+    <div class="filter-search-wrapper">
       <div class="filter-section">
-        <div class="filter-item active">
-          <span>Все пользователи</span>
-        </div>
-        <div class="filter-item">
-          <span>Пользователь</span>
-        </div>
-        <div class="filter-item">
-          <span>Администратор</span>
-        </div>
+        <div class="filter-item active">Все пользователи</div>
+        <div class="filter-item">Активные</div>
+        <div class="filter-item">Неактивные</div>
       </div>
-    </div>
 
-    <div class="search-container" style="margin-top: 10px;">
-      <div class="input-field">
+      <div class="search-container input-field">
         <input id="search" type="text" placeholder="Поиск пользователей...">
-        <i class="material-icons prefix" style="position: absolute; right: 10px; top: 10px;">search</i>
+        {{!-- <label for="search"><i class="material-icons prefix">search</i></label> --}}
       </div>
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <div class="users-table">
+  <div class="users-table card-panel white lighten-1">
     <table class="highlight responsive-table">
       <thead>
         <tr>
@@ -35,83 +29,178 @@
           <th>Email</th>
           <th>Телефон</th>
           <th>Активность</th>
-          <th>Роль</th>
+          <th>Статус</th>
           <th>Действия</th>
         </tr>
       </thead>
       <tbody>
-        {{#each base}}
-          <tr>
-            <td>{{ID}}</td>
-            <td>{{user_fullname}}</td>
-            <td><a href="mailto:{{email}}">{{email}}</a></td>
-            <td><a href="tel:{{telphone}}">{{telphone}}</a></td>
-            <td>
-              {{#if (eq order_count 0)}}
-                Нет заказов
-              {{else}}
-                {{order_count}} 
-              {{/if}}
-            </td>
-            <td><{{role}}></span></td>
-            <td>
-              <a class="btn-flat waves-effect tooltipped delete-user" data-tooltip="Удалить" data-position="top" data-id="{{ID}}">
-                <i class="material-icons">delete</i>
-              </a>
-            </td>
-          </tr>
+        {{#each users}}
+        <tr>
+          <td>{{id}}</td>
+          <td>{{name}}</td>
+          <td><a href="mailto:{{email}}">{{email}}</a></td>
+          <td><a href="tel:{{tel}}">{{tel}}</a></td>
+          <td>
+            {{#if (eq orders 0)}}
+              Нет заказов
+            {{else}}
+              {{orders}} {{pluralize orders "заказ" "заказа" "заказов"}}
+            {{/if}}
+          </td>
+          <td><span class="status-badge {{status}}">{{lookupStatusLabel status}}</span></td>
+          <td>
+            <a class="btn-flat waves-effect tooltipped" data-tooltip="Удалить" data-position="top">
+              <i class="material-icons">delete</i>
+            </a>
+          </td>
+        </tr>
         {{/each}}
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- Модальное окно -->
 <div id="delete-modal" class="modal">
   <div class="modal-content">
     <h4>Подтверждение удаления</h4>
     <p>Вы уверены, что хотите удалить этого пользователя?</p>
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-close btn-flat">Отмена</a>
-    <a href="#!" id="confirm-delete-btn" class="btn-flat red-text text-accent-2">Удалить</a>
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Отмена</a>
+    <a href="#!" class="waves-effect waves-red btn-flat">Удалить</a>
   </div>
 </div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    M.Modal.init(document.querySelectorAll('.modal'));
+    M.AutoInit();
 
-    let userIdToDelete = null;
+    const tooltips = document.querySelectorAll('.tooltipped');
+    M.Tooltip.init(tooltips);
 
-    document.querySelectorAll('.delete-user').forEach(btn => {
-      btn.addEventListener('click', function () {
-        userIdToDelete = this.dataset.id; // Получаем ID из data-id
-        const modal = M.Modal.getInstance(document.getElementById('delete-modal'));
-        modal.open();
+    const modal = document.querySelectorAll('.modal');
+    M.Modal.init(modal);
+
+    document.querySelectorAll('.filter-item').forEach(item => {
+      item.addEventListener('click', function () {
+        document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
       });
     });
 
-    document.getElementById('confirm-delete-btn').addEventListener('click', async function () {
-      if (!userIdToDelete) return;
-
-      try {
-        const response = await fetch('/delete-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: userIdToDelete })
+    document.querySelectorAll('.btn-flat .material-icons').forEach(btn => {
+      if (btn.textContent === 'delete') {
+        btn.closest('a').addEventListener('click', function (e) {
+          e.preventDefault();
+          const instance = M.Modal.getInstance(document.getElementById('delete-modal'));
+          instance.open();
         });
-
-        if (response.ok) {
-          window.location.reload(); 
-        } else {
-          alert('Ошибка при удалении');
-        }
-      } catch (error) {
-        console.error('Ошибка:', error);
-        alert('Произошла ошибка при удалении.');
       }
-      userIdToDelete = null;
     });
   });
 </script>
+
+<style>
+  .users-page-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #2c3e50;
+  }
+
+  .filter-search-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .filter-section {
+    display: flex;
+    gap: 12px;
+  }
+
+  .filter-item {
+    background-color: #f0f0f0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-weight: 500;
+    color: #555;
+  }
+
+  .filter-item:hover {
+    background-color: #e0e0e0;
+  }
+
+  .filter-item.active {
+    background-color: #2196f3;
+    color: white;
+    font-weight: 600;
+  }
+
+  .search-container {
+    flex-grow: 1;
+    max-width: 300px;
+  }
+
+  .search-container .input-field {
+    margin: 0;
+    position: relative;
+  }
+
+  .search-container input {
+    padding-left: 36px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .search-container .material-icons.prefix {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    color: #888;
+  }
+
+  .users-table {
+    margin-top: 32px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .users-table table {
+    margin: 0;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    background-color: #4caf50;
+    color: white;
+    font-weight: 500;
+  }
+
+  @media screen and (max-width: 768px) {
+    .filter-search-wrapper {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .page-title {
+      font-size: 22px;
+      text-align: center;
+    }
+  }
+</style>
