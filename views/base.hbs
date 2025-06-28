@@ -34,12 +34,12 @@
         </tr>
       </thead>
       <tbody>
-        {{#each users}}
+        {{#each base}}
         <tr>
-          <td>{{id}}</td>
-          <td>{{name}}</td>
+          <td>{{ID}}</td>
+          <td>{{user_fullname}}</td>
           <td><a href="mailto:{{email}}">{{email}}</a></td>
-          <td><a href="tel:{{tel}}">{{tel}}</a></td>
+          <td><a href="tel:{{telphone}}">{{telphone}}</a></td>
           <td>
             {{#if (eq orders 0)}}
               Нет заказов
@@ -47,7 +47,13 @@
               {{orders}} {{pluralize orders "заказ" "заказа" "заказов"}}
             {{/if}}
           </td>
-          <td><span class="status-badge {{status}}">{{lookupStatusLabel status}}</span></td>
+          <td><span class="status-badge {{role}}">
+            {{#if (eq role 1)}}
+              {{lookupStatusLabel "Администратор"}}
+            {{else}}
+              {{lookupStatusLabel "Пользователь"}}
+            {{/if}}
+            </span></td>
           <td>
             <a class="btn-flat waves-effect tooltipped" data-tooltip="Удалить" data-position="top">
               <i class="material-icons">delete</i>

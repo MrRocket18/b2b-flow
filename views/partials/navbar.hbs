@@ -1,64 +1,70 @@
-<div class="navbar-blur">
-  <nav class="nav-wrapper transparent z-depth-0">
-    <div class="container navbar-content">
-      <!-- ЛЕВАЯ ЧАСТЬ: ЛОГО + КНОПКИ -->
-      <div class="navbar-left">
-        <a href="/" class="brand-logo">
-          <img src="/images/logo.png" alt="logo" class="navbar-logo">
+{{#if (isEqual session undefined)}}
+{{else}}
+  <div class="navbar-blur">
+    <nav class="nav-wrapper transparent z-depth-0">
+      <div class="container navbar-content">
+        <!-- ЛЕВАЯ ЧАСТЬ: ЛОГО + КНОПКИ -->
+        <div class="navbar-left">
+          <a href="/" class="brand-logo">
+            <img src="/images/logo.png" alt="logo" class="navbar-logo">
+          </a>
+
+          <ul class="nav-links hide-on-med-and-down">
+            {{#if (isEqual session.role 1)}}
+              <li><a href="/manager">Заказы</a></li>
+              <li><a href="/arch">Архив</a></li>
+              <li><a href="/base">Пользователи</a></li>
+            {{else}}
+              <li><a href="/applications">Заказы</a></li>
+            {{/if}}
+          </ul>
+        </div>
+
+        <!-- ПРАВАЯ ЧАСТЬ: РОЛЬ + ФИО + ВЫХОД -->
+        <div class="user-info hide-on-med-and-down">
+          <span class="user-role {{#if (isEqual session.role 1)}}red-text text-lighten-2{{else}}blue-text text-lighten-2{{/if}}">
+            {{#if (isEqual session.role 1)}}
+              Администратор
+            {{else}}
+              Пользователь
+            {{/if}}
+          </span>
+          <span class="user-name white-text">{{session.name}}</span>
+          <form id="logout-form" action="/logout" method="POST" style="display:inline;">
+            <button class="btn-flat logout-btn" type="submit" title="Выйти">
+              <i class="material-icons white-text">logout</i>
+            </button>
+          </form>
+        </div>
+
+        <!-- БУРГЕР-МЕНЮ -->
+        <a href="#" data-target="mobile-nav" class="sidenav-trigger">
+          <i class="material-icons">menu</i>
         </a>
-
-        <ul class="nav-links hide-on-med-and-down">
-          {{#if (isEqual session.role 'Admin')}}
-            <li><a href="/manager">Заказы</a></li>
-            <li><a href="/arch">Архив</a></li>
-            <li><a href="/base">Пользователи</a></li>
-          {{else if (isEqual session.role 'User')}}
-            <li><a href="/applications">Заказы</a></li>
-          {{/if}}
-        </ul>
       </div>
+    </nav>
 
-      <!-- ПРАВАЯ ЧАСТЬ: РОЛЬ + ФИО + ВЫХОД -->
-      <div class="user-info hide-on-med-and-down">
-        <span class="user-role {{#if (isEqual session.role 'Admin')}}red-text text-lighten-2{{else}}blue-text text-lighten-2{{/if}}">
-          {{session.role}}
-        </span>
-        <span class="user-name white-text">{{session.name}}</span>
-        <form id="logout-form" action="/logout" method="POST" style="display:inline;">
-          <button class="btn-flat logout-btn" type="submit" title="Выйти">
-            <i class="material-icons white-text">logout</i>
-          </button>
+    <!-- МОБИЛЬНОЕ МЕНЮ -->
+    <ul class="sidenav" id="mobile-nav">
+      {{#if (isEqual session.role 1)}}
+        <li><a href="/manager">Заказы</a></li>
+        <li><a href="/arch">Архив</a></li>
+        <li><a href="/base">Пользователи</a></li>
+      {{else if (isEqual session.role 0)}}
+        <li><a href="/applications">Заказы</a></li>
+      {{/if}}
+
+      <li class="divider"></li>
+      <li><span class="grey-text text-darken-1">Роль: {{session.role}}</span></li>
+      <li><span class="grey-text text-darken-1">{{session.name}}</span></li>
+      <li>
+        <form action="/logout" method="POST">
+          <button class="btn red lighten-1">Выйти</button>
         </form>
-      </div>
-
-      <!-- БУРГЕР-МЕНЮ -->
-      <a href="#" data-target="mobile-nav" class="sidenav-trigger">
-        <i class="material-icons">menu</i>
-      </a>
-    </div>
-  </nav>
-
-  <!-- МОБИЛЬНОЕ МЕНЮ -->
-  <ul class="sidenav" id="mobile-nav">
-    {{#if (isEqual session.role 'Admin')}}
-      <li><a href="/manager">Заказы</a></li>
-      <li><a href="/arch">Архив</a></li>
-      <li><a href="/base">Пользователи</a></li>
-    {{else if (isEqual session.role 'User')}}
-      <li><a href="/applications">Заказы</a></li>
-    {{/if}}
-
-    <li class="divider"></li>
-    <li><span class="grey-text text-darken-1">Роль: {{session.role}}</span></li>
-    <li><span class="grey-text text-darken-1">{{session.name}}</span></li>
-    <li>
-      <form action="/logout" method="POST">
-        <button class="btn red lighten-1">Выйти</button>
-      </form>
-    </li>
-  </ul>
-</div>
-
+      </li>
+    </ul>
+  </div>
+{{/if}}
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {

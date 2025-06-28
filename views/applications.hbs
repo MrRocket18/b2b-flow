@@ -54,9 +54,9 @@
             <a class="btn-flat  edit-btn" >
               <i class="material-icons">edit</i>
             </a>
-            <a class="btn-flat  delete-btn" href="/applications/delete/{{this.ID}}" >
+            <button class="btn-flat delete-btn" data-id="{{this.ID}}">
               <i class="material-icons red-text">delete</i>
-            </a>
+            </button>
           </td>
         </tr>
         {{/each}}
@@ -99,6 +99,40 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        const requestId = this.dataset.id;
+        if (confirm('Вы уверены, что хотите удалить эту заявку?')) {
+          fetch('/delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ID: requestId }) 
+          })
+          .then(response => {
+            if (response.ok) {
+             
+              window.location.href = '/applications';
+            } else {
+              
+              alert('Ошибка при удалении заявки.');
+            }
+          })
+          .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при удалении заявки.');
+          });
+        }
+      });
+    });
+  });
+  
   document.addEventListener('DOMContentLoaded', function () {
     M.AutoInit();
 
@@ -108,7 +142,7 @@
     // Очистить форму при создании
     document.querySelector('a.modal-trigger').addEventListener('click', () => {
       document.getElementById('modal-title').textContent = 'Новый заказ';
-      form.action = '/applications/create';
+      form.action = '/create';
       clearForm();
       modalInstance.open();
     });
@@ -119,7 +153,7 @@
         const row = this.closest('tr');
         const data = JSON.parse(row.dataset.request);
         document.getElementById('modal-title').textContent = 'Редактировать заказ';
-        form.action = `/applications/edit/${data.ID}`;
+        form.action = `/edit/${data.ID}`;
         fillForm(data);
         modalInstance.open();
       });
