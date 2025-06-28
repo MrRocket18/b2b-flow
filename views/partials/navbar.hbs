@@ -1,111 +1,68 @@
-<style>
-  .navbar {
-   display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4rem 2rem;
-    background: linear-gradient(90deg, #0b19576e 0%, #1c2c8678 50%, #3a49b173 100%);
-    color: #fff;
-    font-size: 1rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
+<div class="navbar-blur">
+  <nav class="nav-wrapper transparent z-depth-0">
+    <div class="container navbar-content">
+      <!-- ЛЕВАЯ ЧАСТЬ: ЛОГО + КНОПКИ -->
+      <div class="navbar-left">
+        <a href="/" class="brand-logo">
+          <img src="/images/logo.png" alt="logo" class="navbar-logo">
+        </a>
 
+        <ul class="nav-links hide-on-med-and-down">
+          {{#if (isEqual session.role 'Admin')}}
+            <li><a href="/manager">Заказы</a></li>
+            <li><a href="/arch">Архив</a></li>
+            <li><a href="/base">Пользователи</a></li>
+          {{else if (isEqual session.role 'User')}}
+            <li><a href="/applications">Заказы</a></li>
+          {{/if}}
+        </ul>
+      </div>
 
-  .navbar-left {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-  }
+      <!-- ПРАВАЯ ЧАСТЬ: РОЛЬ + ФИО + ВЫХОД -->
+      <div class="user-info hide-on-med-and-down">
+        <span class="user-role {{#if (isEqual session.role 'Admin')}}red-text text-lighten-2{{else}}blue-text text-lighten-2{{/if}}">
+          {{session.role}}
+        </span>
+        <span class="user-name white-text">{{session.name}}</span>
+        <form id="logout-form" action="/logout" method="POST" style="display:inline;">
+          <button class="btn-flat logout-btn" type="submit" title="Выйти">
+            <i class="material-icons white-text">logout</i>
+          </button>
+        </form>
+      </div>
 
-  .navbar-logo {
-    height: 100px;
-    margin-top: 26px;
-  }
-
-  .navbar-links {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-  }
-
-  .navbar-links a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 26px;
-  }
-
-  .navbar-links a:hover {
-    text-decoration: underline;
-  }
-
-  .navbar-right {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    font-size: 26px;
-  }
-
-  .navbar-role {
-    font-weight: bold;
-    text-transform: uppercase;
-        color: #fedcd1;
-  }
-
-  .navbar-name {
-    
-    color: #e0e0e0;
-  }
-
-  .navbar-logout-form {
-    margin: 0;
-  }
-
-  .navbar-logout-button {
-    background: #ff4d4d00;
-    color: #fff;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-
-  .navbar-logout-button:hover {
-    background: #0b1957;
-  }
-</style>
-{{#if @root.session}}
-<nav class="navbar">
-  <div class="navbar-left">
-    <a href="/">
-      <img src="/images/logo.png" alt="Logo" class="navbar-logo">
-    </a>
-    <div class="navbar-links">
-      {{#if (eq @root.session.role 0)}}
-        <a href="/applications">Главная</a>
-      {{else if (eq @root.session.role 1)}}
-        <a href="/manager">Главная</a>
-        <a href="/arch">Архив</a>
-        <a href="/base">Пользователи</a>
-      {{/if}}
+      <!-- БУРГЕР-МЕНЮ -->
+      <a href="#" data-target="mobile-nav" class="sidenav-trigger">
+        <i class="material-icons">menu</i>
+      </a>
     </div>
-  </div>
-  <div class="navbar-right">
-    <span class="navbar-role">
-      {{#if (eq @root.session.role 0)}}
-        <p> Пользователь</p>
-      {{else}}
-        <p> Администратор</p>
-      {{/if}}
-    </span>
-    <span class="navbar-name">{{@root.session.name}}</span>
-    <form action="/logout" method="get" class="navbar-logout-form">
-      <button type="submit" class="navbar-logout-button">
-        <i class="material-icons">logout</i>
-      </button>
-    </form>
-  </div>
-</nav>
-{{/if}}
+  </nav>
+
+  <!-- МОБИЛЬНОЕ МЕНЮ -->
+  <ul class="sidenav" id="mobile-nav">
+    {{#if (isEqual session.role 'Admin')}}
+      <li><a href="/manager">Заказы</a></li>
+      <li><a href="/arch">Архив</a></li>
+      <li><a href="/base">Пользователи</a></li>
+    {{else if (isEqual session.role 'User')}}
+      <li><a href="/applications">Заказы</a></li>
+    {{/if}}
+
+    <li class="divider"></li>
+    <li><span class="grey-text text-darken-1">Роль: {{session.role}}</span></li>
+    <li><span class="grey-text text-darken-1">{{session.name}}</span></li>
+    <li>
+      <form action="/logout" method="POST">
+        <button class="btn red lighten-1">Выйти</button>
+      </form>
+    </li>
+  </ul>
+</div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('.sidenav');
+    M.Sidenav.init(elems);
+  });
+</script>

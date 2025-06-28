@@ -1,146 +1,187 @@
-<h1 class="applications-title">Все заявки</h1>
+<div class="orders-page-container">
+  <h1 class="orders-page-title">Все заказы</h1>
 
-<div class="search-container">
-  <div class="input-field">
-    <input id="search" type="text" class="validate">
-    <label for="search">Поиск заявок</label>
-    <i class="material-icons search-icon">search</i>
+  <!-- Сводная таблица -->
+  <div class="card-panel white lighten-1 summary-container">
+    <table class="striped centered highlight summary-table">
+      <thead>
+        <tr>
+          <th>Новые</th>
+          <th>В обработке</th>
+          <th>Выполнено</th>
+          <th>Отменено</th>
+          <th>Итого</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{summary.new}}</td>
+          <td>{{summary.processing}}</td>
+          <td>{{summary.completed}}</td>
+          <td>{{summary.cancelled}}</td>
+          <td>{{summary.total}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Фильтры -->
+  <div class="row filter-bar">
+    <div class="input-field col s6 m6">
+      <input type="text" id="search-input" placeholder="Поиск по ID, названию, пользователю, дате">
+    </div>
+    <div class="input-field col s6 m6">
+      <select id="status-filter">
+        <option value="">Все статусы</option>
+        <option value="На рассмотрении">На рассмотрении</option>
+        <option value="Закупаем">Закупаем</option>
+        <option value="Ждём поставку">Ждём поставку</option>
+        <option value="Готово к получению">Готово к получению</option>
+        <option value="Получен">Получен</option>
+      </select>
+      <label>Фильтр по статусу</label>
+    </div>
+  </div>
+
+  <!-- Основная таблица -->
+  <div class="card-panel white lighten-1 orders-container">
+    <table class="striped highlight responsive-table" id="orders-table">
+      <thead>
+        <tr>
+          <th class="sortable" data-sort="item_name">Название</th>
+          <th class="sortable" data-sort="count">Кол-во</th>
+          <th class="sortable" data-sort="price">Цена</th>
+          <th class="sortable" data-sort="desired_date">Желаемая дата</th>
+          <th>ID пользователя</th>
+          <th class="sortable" data-sort="status">Статус</th>
+          <th>Комментарий</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="orders-body">
+        {{#each requests}}
+        <tr>
+          <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
+          <td>{{this.count}}</td>
+          <td>{{this.price}}</td>
+          <td>{{this.desired_date}}</td>
+          <td>{{this.user_id}}</td>
+          <td><span class="status-badge">{{this.status}}</span></td>
+          <td>{{this.comment}}</td>
+          <td>
+            <button class="btn-small blue lighten-2 change-status-btn" data-id="{{this.ID}}" data-status="{{this.status}}">
+              Изменить
+            </button>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
   </div>
 </div>
 
-<div class="summary-card">
-  <h2>Суммарная стоимость заявок:</h2>
-  <div class="summary-items">
-    <div class="summary-item">
-      <span class="status-indicator new"></span>
-      <span>Новые:</span>
-      <span class="amount">{{summary.new}} ₽</span>
+<!-- MODAL -->
+<div id="status-modal" class="modal">
+  <form method="POST" id="status-form">
+    <div class="modal-content">
+      <h5>Изменить статус заявки</h5>
+      <div class="input-field">
+        <select name="new_status" id="new-status-select" required>
+          <option value="" disabled selected>Выберите статус</option>
+          <option value="На рассмотрении">На рассмотрении</option>
+          <option value="Закупаем">Закупаем</option>
+          <option value="Ждём поставку">Ждём поставку</option>
+          <option value="Готово к получению">Готово к получению</option>
+          <option value="Получен">Получен</option>
+        </select>
+        <label>Новый статус</label>
+      </div>
     </div>
-    <div class="summary-item">
-      <span class="status-indicator processing"></span>
-      <span>В обработке:</span>
-      <span class="amount">{{summary.processing}} ₽</span>
+    <div class="modal-footer">
+      <button type="submit" class="modal-close btn green">Сохранить</button>
+      <a class="modal-close btn-flat">Отмена</a>
     </div>
-    <div class="summary-item">
-      <span class="status-indicator completed"></span>
-      <span>Выполнено:</span>
-      <span class="amount">{{summary.completed}} ₽</span>
-    </div>
-    <div class="summary-item">
-      <span class="status-indicator cancelled"></span>
-      <span>Отменено:</span>
-      <span class="amount">{{summary.cancelled}} ₽</span>
-    </div>
-    <div class="summary-total">
-      <span>Итого:</span>
-      <span class="total-amount">{{summary.total}} ₽</span>
-    </div>
-  </div>
-</div>
-
-<div class="table-responsive">
-  <table class="highlight striped sortable">
-    <thead>
-      <tr>
-        <th class="sortable-header" data-column="name">Название <i class="material-icons sort-icon">unfold_more</i></th>
-        <th class="sortable-header" data-column="quantity">Количество <i class="material-icons sort-icon">unfold_more</i></th>
-        <th class="sortable-header" data-column="price">Цена <i class="material-icons sort-icon">unfold_more</i></th>
-        <th>Ссылка</th>
-        <th>Желаемая дата</th>
-        <th>ID пользователя</th>
-        <th class="sortable-header" data-column="status">Статус <i class="material-icons sort-icon">unfold_more</i></th>
-        <th>Дата поставки</th>
-        <th>Комментарии</th>
-        <th>Действия</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each requests}}
-        {{#unless (eq status "Получен")}}
-          <tr>
-            <td>{{item_name}}</td>
-            <td>{{count}}</td>
-            <td>{{price}} ₽</td>
-            <td>
-              {{#if link}}
-                <a href="{{link}}" target="_blank" class="btn-flat">Ссылка</a>
-              {{else}}
-                —
-              {{/if}}
-            </td>
-            <td>{{desired_date}}</td>
-            <td>
-              <a href="/users/{{user_id}}" class="user-id-link">{{user_fullname}}</a>
-            </td>
-            <td>
-              <span class="status-badge {{lowercase status}}">{{status}}</span>
-            </td>
-            <td>{{delivery_date}}</td>
-            <td>
-              <a href="#" class="btn-floating btn-small waves-effect waves-light blue" title="Комментарий">
-                <i class="material-icons">comment</i>
-              </a>
-            </td>
-            <td>
-              <a href="/edit?id={{ID}}" class="btn-floating btn-small waves-effect waves-light grey" title="Редактировать">
-                <i class="material-icons">edit</i>
-              </a>
-            </td>
-          </tr>
-          {{/unless}}
-      {{/each}}
-    </tbody>
-  </table>
+  </form>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    M.AutoInit();
+  document.addEventListener('DOMContentLoaded', function () {
+    const elems = document.querySelectorAll('.modal');
+    M.Modal.init(elems);
 
-    function sortTable(columnIndex, direction) {
-      const table = document.querySelector('.sortable');
-      const tbody = table.querySelector('tbody');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
+    const selects = document.querySelectorAll('select');
+    M.FormSelect.init(selects);
 
-      rows.sort((a, b) => {
-        const aText = a.cells[columnIndex].textContent.trim();
-        const bText = b.cells[columnIndex].textContent.trim();
+    const modal = M.Modal.getInstance(document.getElementById('status-modal'));
+    const form = document.getElementById('status-form');
 
-        if (columnIndex === 1 || columnIndex === 2) {
-          const aNum = parseFloat(aText.replace(/[^\d.]/g, ''));
-          const bNum = parseFloat(bText.replace(/[^\d.]/g, ''));
-          return direction === 'asc' ? aNum - bNum : bNum - aNum;
-        }
-
-        return direction === 'asc'
-          ? aText.localeCompare(bText)
-          : bText.localeCompare(aText);
-      });
-
-      while (tbody.firstChild) {
-        tbody.removeChild(tbody.firstChild);
-      }
-
-      rows.forEach(row => tbody.appendChild(row));
-    }
-
-
-    document.querySelectorAll('.sortable-header').forEach(header => {
-      header.addEventListener('click', function () {
-        const columnIndex = Array.from(this.parentNode.children).indexOf(this);
-        const isAsc = this.classList.contains('asc');
-        const direction = isAsc ? 'desc' : 'asc';
-
-        document.querySelectorAll('.sortable-header').forEach(h => {
-          h.classList.remove('asc', 'desc');
-          h.querySelector('.sort-icon').textContent = 'unfold_more';
+    document.querySelectorAll('.change-status-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const currentStatus = btn.dataset.status;
+        form.action = `/update-status/${id}`;
+        const select = document.getElementById('new-status-select');
+        [...select.options].forEach(opt => {
+          opt.selected = (opt.value === currentStatus);
         });
-
-        this.classList.add(direction);
-        this.querySelector('.sort-icon').textContent = direction === 'asc' ? 'arrow_downward' : 'arrow_upward';
-
-        sortTable(columnIndex, direction);
+        M.FormSelect.init(select);
+        modal.open();
       });
     });
+
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const rows = Array.from(document.querySelectorAll('#orders-body tr'));
+    let sortField = null;
+    let sortAsc = true;
+
+    function applyFilters() {
+      const term = searchInput?.value.toLowerCase() || '';
+      const selectedStatus = statusFilter?.value || '';
+
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const matchesSearch = term === '' || text.includes(term);
+        const matchesStatus = selectedStatus === '' || row.cells[5].innerText === selectedStatus;
+        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+      });
+    }
+
+    function sortTable(field) {
+      const indexMap = {
+        item_name: 0,
+        count: 1,
+        price: 2,
+        desired_date: 3,
+        status: 5
+      };
+      const colIndex = indexMap[field];
+      const sortedRows = [...rows].sort((a, b) => {
+        const aText = a.cells[colIndex].innerText.trim();
+        const bText = b.cells[colIndex].innerText.trim();
+        const aNum = parseFloat(aText.replace(',', '.'));
+        const bNum = parseFloat(bText.replace(',', '.'));
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return sortAsc ? aNum - bNum : bNum - aNum;
+        }
+        return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+      });
+
+      const tbody = document.getElementById('orders-body');
+      tbody.innerHTML = '';
+      sortedRows.forEach(row => tbody.appendChild(row));
+    }
+
+    document.querySelectorAll('.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const field = th.getAttribute('data-sort');
+        sortAsc = sortField === field ? !sortAsc : true;
+        sortField = field;
+        sortTable(field);
+      });
+    });
+
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
   });
 </script>
