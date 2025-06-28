@@ -21,23 +21,21 @@
           <th>Дата доставки</th>
           <th>Пользователь</th>
           <th>Сумма</th>
-          <th>Товары</th>
+          <th>Товар</th>
           <th>Статус</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        {{#each archive}}
+        {{#each arch}}
           <tr>
             <form method="POST" action="/archive/update/{{this.id}}">
-              <td>{{id}}</td>
+              <td>{{ID}}</td>
               <td>{{delivery_date}}</td>
-              <td>{{user}}</td>
+              <td>{{user_fullname}}</td>
               <td>{{total}} ₽</td>
               <td>
-                {{#each items}}
-                  <a href="{{this.link}}" class="product-link" target="_blank">{{this.name}}</a>{{#unless @last}}, {{/unless}}
-                {{/each}}
+                  <a href="{{link}}" class="product-link">{{item_name}}</a>
               </td>
               <td>
                 <select name="status" class="browser-default">

@@ -71,9 +71,9 @@
           <td>{{this.price}}</td>
           <td>{{this.desired_date}}</td>
           <td>
-            <input type="date" name="expected_date" value="{{this.expected_date}}">
+            <input type="date" name="expected_date" value="{{this.delivery_date}}">
           </td>
-          <td>{{this.user_id}}</td>
+          <td>{{this.user_fullname}}</td>
           <td>
             <select name="status" class="browser-default">
               <option value="На рассмотрении" {{#if (isEqual this.status "На рассмотрении")}}selected{{/if}}>На рассмотрении</option>

@@ -101,7 +101,8 @@ export async function GetUserRequests(user_id) {
       link, 
       DATE_FORMAT(desired_date, '%d.%m.%Y') AS desired_date,
       DATE_FORMAT(delivery_date, '%d.%m.%Y') AS delivery_date,
-      comment 
+      status,
+      comment
       FROM Request 
       WHERE user_id = ?`, [user_id]);
 
@@ -136,11 +137,11 @@ export async function updateRequestById(id, updatedData) {
         const count = Number(updatedData.count);
         const price = Number(updatedData.price);
 
-        const desiredDate = formatDate(updatedData.desired_date);
+        //const desiredDate = formatDate(updatedData.desired_date);
+        
+        const query = `UPDATE Request SET item_name = ?, count = ?, price = ?, desired_date = ?, comment = ? WHERE id = ?`;
 
-        const query = `UPDATE Request SET item_name = ?, count = ?, price = ?, link = ?, desired_date = ?, comment = ? WHERE id = ?`;
-
-        const values = [updatedData.item_name, count, price, updatedData.link, desiredDate, updatedData.comment, id];
+        const values = [updatedData.item_name, count, price, updatedData.desired_date, updatedData.comment, id]; 
 
         const [result] = await pool.execute(query, values);
 
