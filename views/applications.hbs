@@ -7,8 +7,21 @@
     <div class="filter-search-wrapper">
       <div class="search-container input-field">
         <input id="search" type="text" placeholder="Поиск по заказам...">
-        {{!-- <label for="search"><i class="material-icons prefix">search</i></label> --}}
+        {{!-- <i class="material-icons prefix">search</i> --}}
       </div>
+
+      <div class="input-field status-select-wrapper">
+        <select id="status-filter">
+          <option value="">Все статусы</option>
+          <option value="На рассмотрении">На рассмотрении</option>
+          <option value="Закупаем">Закупаем</option>
+          <option value="Ждём поставку">Ждём поставку</option>
+          <option value="Готово к получению">Готово к получению</option>
+          <option value="Получен">Получен</option>
+        </select>
+        <label>Фильтр по статусу</label>
+      </div>
+
       <a class="btn-floating btn-large waves-effect waves-light blue modal-trigger" href="#create-modal" title="Добавить">
         <i class="material-icons">add</i>
       </a>
@@ -38,11 +51,11 @@
           <td><span class="status-badge">{{this.status}}</span></td>
           <td>{{this.comment}}</td>
           <td>
-            <a class="btn-flat tooltipped edit-btn" data-tooltip="Редактировать">
+            <a class="btn-flat  edit-btn" >
               <i class="material-icons">edit</i>
             </a>
-            <a class="btn-flat tooltipped repeat-btn" data-tooltip="Повторить">
-              <i class="material-icons">refresh</i>
+            <a class="btn-flat  delete-btn" href="/applications/delete/{{this.ID}}" >
+              <i class="material-icons red-text">delete</i>
             </a>
           </td>
         </tr>
@@ -88,26 +101,25 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     M.AutoInit();
+
     const modalInstance = M.Modal.getInstance(document.getElementById('create-modal'));
     const form = document.getElementById('order-form');
 
+    // Очистить форму при создании
+    document.querySelector('a.modal-trigger').addEventListener('click', () => {
+      document.getElementById('modal-title').textContent = 'Новый заказ';
+      form.action = '/applications/create';
+      clearForm();
+      modalInstance.open();
+    });
+
+    // Редактировать
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', function () {
         const row = this.closest('tr');
         const data = JSON.parse(row.dataset.request);
         document.getElementById('modal-title').textContent = 'Редактировать заказ';
         form.action = `/applications/edit/${data.ID}`;
-        fillForm(data);
-        modalInstance.open();
-      });
-    });
-
-    document.querySelectorAll('.repeat-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        const row = this.closest('tr');
-        const data = JSON.parse(row.dataset.request);
-        document.getElementById('modal-title').textContent = 'Повторить заказ';
-        form.action = '/applications/create';
         fillForm(data);
         modalInstance.open();
       });
@@ -121,6 +133,35 @@
       document.getElementById('comment').value = data.comment || '';
       M.updateTextFields();
     }
+
+    function clearForm() {
+      ['item_name', 'count', 'price', 'desired_date', 'comment'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      M.updateTextFields();
+    }
+
+    // Фильтрация
+    const searchInput = document.getElementById('search');
+    const statusFilter = document.getElementById('status-filter');
+    const rows = Array.from(document.querySelectorAll('tbody tr'));
+
+    function applyFilters() {
+      const search = searchInput.value.toLowerCase();
+      const selectedStatus = statusFilter.value;
+
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const status = row.querySelector('.status-badge')?.textContent || '';
+        const matchesSearch = !search || text.includes(search);
+        const matchesStatus = !selectedStatus || status === selectedStatus;
+        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+      });
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
   });
 </script>
 
@@ -141,7 +182,7 @@
   .filter-search-wrapper {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     flex-wrap: wrap;
     gap: 16px;
     margin-bottom: 24px;
@@ -150,10 +191,6 @@
   .search-container {
     flex-grow: 1;
     max-width: 300px;
-  }
-
-  .search-container .input-field {
-    margin: 0;
     position: relative;
   }
 
@@ -168,6 +205,10 @@
     top: 8px;
     left: 8px;
     color: #888;
+  }
+
+  .status-select-wrapper {
+    min-width: 200px;
   }
 
   .orders-container {
@@ -196,6 +237,7 @@
       flex-direction: column;
       align-items: stretch;
     }
+
     .page-title {
       font-size: 22px;
       text-align: center;
