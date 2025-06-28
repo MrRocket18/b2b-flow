@@ -148,7 +148,7 @@ app.post('/', async(req, res) => {
 // });
 
 app.get('/applications', async (req, res) => {
-  if (req.session.role !== "User") {
+  if (req.session.role != 0) {
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`);
     return res.redirect('/manager');
   }
@@ -170,7 +170,7 @@ app.get('/applications', async (req, res) => {
 });
 
 app.get('/manager', (req, res) => {
-  if(req.session.role!="Admin"){
+  if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications');
   } 
@@ -191,7 +191,7 @@ app.get('/manager', (req, res) => {
 });
 
 app.get('/arch', (req, res) => {
-  if(req.session.role!="Admin"){
+  if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications')
   } 
@@ -203,7 +203,7 @@ app.get('/arch', (req, res) => {
 });
 
 app.get('/base', (req, res) => {
-  if(req.session.role!="Admin"){
+  if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications')
   } 
@@ -215,7 +215,7 @@ app.get('/base', (req, res) => {
 });
 
 app.get('/create', (req, res) => {
-  if(req.session.role!="User")
+  if(req.session.role != 0)
   {
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/manager')
@@ -251,6 +251,11 @@ app.post('/create', async (req, res) => {
 });
 
 app.get('/edit', async (req, res) => {
+  if(req.session.role != 0)
+  {
+    console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
+    return res.redirect('/manager')
+  }
   const { id } = req.query;
 
   if (!id || isNaN(Number(id))) {
@@ -312,7 +317,7 @@ app.post('/edit', async (req, res) => {
 
 
 app.get('/repeat', async (req, res) => { 
-  if (req.session.role !== "User") {
+  if (req.session.role != 0) {
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`);
     return res.redirect('/manager');
   }
