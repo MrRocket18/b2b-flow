@@ -236,8 +236,6 @@ app.post('/create', async (req, res) => {
     const user_id = req.session.uid;
     const { item_name, count, price, link, desired_date, comment } = req.body;
 
-    //console.log("Вызываю createRequest с:", {user_id, item_name, count, price, link, desired_date, comment});
-
     const result = await db.createRequest({user_id, item_name, count, price, link, desired_date, comment});
 
     if (result.success) {
@@ -259,13 +257,8 @@ app.get('/edit', async (req, res) => {
     return res.redirect('/manager')
   }
   const { id } = req.query;
-
-  if (!id || isNaN(Number(id))) {
-    return res.status(400).send('Некорректный ID');
-  }
-
   try {
-    const request = await db.getRequestById(Number(id));
+    const request = await db.GetRequestById(id);
 
     if (!request) {
       return res.status(404).send('Заявка не найдена');
