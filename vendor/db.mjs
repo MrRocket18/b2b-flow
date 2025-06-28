@@ -27,7 +27,7 @@ async function start() {
     }
 
 }
-start()
+await start()
 export async function auth_user(userData) {
     try {
 
@@ -36,7 +36,7 @@ export async function auth_user(userData) {
 
         // Очистка email от пробелов и невидимых символов
         const cleanedEmail = email.trim().replace(/\s+/g, '').replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-        // console.log(cleanedEmail)
+        
         const [idAndPasswordRows] = await pool.query('SELECT ID, password FROM Users WHERE email = ?', [cleanedEmail]);
         const [userDetailsRows] = await pool.query('SELECT first_name, last_name, midle_name FROM Users WHERE email = ?', [cleanedEmail]);
 
@@ -51,7 +51,7 @@ export async function auth_user(userData) {
         return { ID, password, name };
     } catch (error) {
         console.error('Ошибка при получении id и пароля по email:', error);
-        throw error; // Перебрасываем ошибку для обработки на более высоком уровне
+        throw error; 
     }
 }
 export async function get_roles(ID) {
@@ -94,20 +94,19 @@ function formatDate(ruDate) {
 
 export async function GetUserRequests(user_id) {
   try {
-    const [rows] = await pool.query('SELECT * FROM Request WHERE user_id = ?', [user_id]);
+    const [rows] = await pool.query(`SELECT ID, 
+      item_name, 
+      count, 
+      price, 
+      link, 
+      DATE_FORMAT(desired_date, '%d.%m.%Y') AS desired_date,
+      DATE_FORMAT(delivery_date, '%d.%m.%Y') AS delivery_date,
+      comment 
+      FROM Request 
+      WHERE user_id = ?`, [user_id]);
 
-    const dateFields = ['desired_date', 'delivery_date']; 
-
-    const formattedRows = rows.map(row => {
-      dateFields.forEach(field => {
-        if (row[field] instanceof Date) {
-          row[field] = formatDateToDDMMYYYY(row[field]);
-        }
-      });
-      return row;
-    });
-
-    return formattedRows;
+      return rows;
+      
   } catch (error) {
     console.error('Ошибка при получении заявок пользователя:', error);
     throw error;
@@ -117,38 +116,21 @@ export async function GetUserRequests(user_id) {
 export async function GetRequestById(id) {
   try {
     const [rows] = await pool.query(
-      'SELECT item_name, count, price, link, desired_date, comment FROM Request WHERE id = ?', 
+      `SELECT item_name, 
+      count, 
+      price, 
+      link, 
+      DATE_FORMAT(desired_date, '%d.%m.%Y') AS desired_date, 
+      comment 
+      FROM Request WHERE id = ?`, 
       [id] 
     );
-    rows[0].desired_date =  formatDateToDDMMYYYY(rows[0].desired_date)
     return rows[0];
   } catch (error) {
     console.error('Ошибка при получении данных о товаре по ID:', error);
     throw error; 
   }
 }
-export async function getRequestById(id) {
-  try {
-    const [rows] = await pool.query(
-      'SELECT item_name, count, price, link, desired_date, comment FROM Request WHERE id = ?',
-      [id]
-    );
-
-    if (rows.length === 0) return null;
-
-    const request = rows[0];
-
-    return {
-      ...request,
-      price: parseFloat(request.price), // ✅ Приводим к числу
-      desired_date: formatDateToDDMMYYYY(request.desired_date) // 📅 Оставляем формат ДД.ММ.ГГГГ
-    };
-  } catch (error) {
-    console.error('Ошибка при получении заявки из БД:', error);
-    throw error;
-  }
-}
-
 export async function updateRequestById(id, updatedData) {
     try {
         const count = Number(updatedData.count);
@@ -261,15 +243,15 @@ export async function GetAllRequest() {
   }
 }
 
-function formatDateToDDMMYYYY(date) {
-        if (!(date instanceof Date) || isNaN(date.getTime())) {
-            return '';
-        }
+// function formatDateToDDMMYYYY(date) {
+//         if (!(date instanceof Date) || isNaN(date.getTime())) {
+//             return '';
+//         }
 
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы с 0
-        const year = date.getFullYear();
+//         const day = String(date.getDate()).padStart(2, '0');
+//         const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы с 0
+//         const year = date.getFullYear();
 
-        return `${day}.${month}.${year}`;
-    }
+//         return `${day}.${month}.${year}`;
+//     }
 
