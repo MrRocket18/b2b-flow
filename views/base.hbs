@@ -8,10 +8,10 @@
           <span>Все пользователи</span>
         </div>
         <div class="filter-item">
-          <span>Активные</span>
+          <span>Пользователь</span>
         </div>
         <div class="filter-item">
-          <span>Неактивные</span>
+          <span>Администратор</span>
         </div>
       </div>
     </div>
@@ -35,27 +35,27 @@
           <th>Email</th>
           <th>Телефон</th>
           <th>Активность</th>
-          <th>Статус</th>
+          <th>Роль</th>
           <th>Действия</th>
         </tr>
       </thead>
       <tbody>
-        {{#each users}}
+        {{#each base}}
           <tr>
-            <td>{{id}}</td>
-            <td>{{name}}</td>
+            <td>{{ID}}</td>
+            <td>{{user_fullname}}</td>
             <td><a href="mailto:{{email}}">{{email}}</a></td>
-            <td><a href="tel:{{tel}}">{{tel}}</a></td>
+            <td><a href="tel:{{telphone}}">{{telphone}}</a></td>
             <td>
-              {{#if (eq orders 0)}}
+              {{#if (eq order_count 0)}}
                 Нет заказов
               {{else}}
-                {{orders}} {{pluralize orders "заказ" "заказа" "заказов"}}
+                {{order_count}} 
               {{/if}}
             </td>
-            <td><span class="status-badge {{status}}">{{lookupStatusLabel status}}</span></td>
+            <td><{{role}}></span></td>
             <td>
-              <a class="btn-flat waves-effect tooltipped" data-tooltip="Удалить" data-position="top">
+              <a class="btn-flat waves-effect tooltipped delete-user" data-tooltip="Удалить" data-position="top" data-id="{{ID}}">
                 <i class="material-icons">delete</i>
               </a>
             </td>
@@ -66,42 +66,52 @@
   </div>
 </div>
 
+<!-- Модальное окно -->
 <div id="delete-modal" class="modal">
   <div class="modal-content">
     <h4>Подтверждение удаления</h4>
     <p>Вы уверены, что хотите удалить этого пользователя?</p>
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Отмена</a>
-    <a href="#!" class="waves-effect waves-red btn-flat">Удалить</a>
+    <a href="#!" class="modal-close btn-flat">Отмена</a>
+    <a href="#!" id="confirm-delete-btn" class="btn-flat red-text text-accent-2">Удалить</a>
   </div>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    M.AutoInit();
+  document.addEventListener('DOMContentLoaded', function () {
+    M.Modal.init(document.querySelectorAll('.modal'));
 
-    const tooltips = document.querySelectorAll('.tooltipped');
-    M.Tooltip.init(tooltips);
+    let userIdToDelete = null;
 
-    const modal = document.querySelectorAll('.modal');
-    M.Modal.init(modal);
-
-    document.querySelectorAll('.filter-item').forEach(item => {
-      item.addEventListener('click', function() {
-        document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
+    document.querySelectorAll('.delete-user').forEach(btn => {
+      btn.addEventListener('click', function () {
+        userIdToDelete = this.dataset.id; // Получаем ID из data-id
+        const modal = M.Modal.getInstance(document.getElementById('delete-modal'));
+        modal.open();
       });
     });
 
-    document.querySelectorAll('.btn-flat .material-icons').forEach(btn => {
-      if (btn.textContent === 'delete') {
-        btn.closest('a').addEventListener('click', function(e) {
-          e.preventDefault();
-          const instance = M.Modal.getInstance(document.getElementById('delete-modal'));
-          instance.open();
+    document.getElementById('confirm-delete-btn').addEventListener('click', async function () {
+      if (!userIdToDelete) return;
+
+      try {
+        const response = await fetch('/delete-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: userIdToDelete })
         });
+
+        if (response.ok) {
+          window.location.reload(); 
+        } else {
+          alert('Ошибка при удалении');
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при удалении.');
       }
+      userIdToDelete = null;
     });
   });
 </script>
