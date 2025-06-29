@@ -5,15 +5,17 @@
     <h1 class="page-title">База пользователей</h1>
 
     <div class="filter-search-wrapper">
-      <div class="filter-section">
-        <div class="filter-item active">Все пользователи</div>
-        <div class="filter-item">Активные</div>
-        <div class="filter-item">Неактивные</div>
+      <div class="input-field role-filter-wrapper">
+        <select id="role-filter">
+          <option value="">Все роли</option>
+          <option value="admin">Администраторы</option>
+          <option value="user">Пользователи</option>
+        </select>
+        <label>Фильтр по роли</label>
       </div>
 
       <div class="search-container input-field">
         <input id="search" type="text" placeholder="Поиск пользователей...">
-        {{!-- <label for="search"><i class="material-icons prefix">search</i></label> --}}
       </div>
     </div>
   </div>
@@ -28,8 +30,8 @@
           <th>Имя</th>
           <th>Email</th>
           <th>Телефон</th>
-          <th>Активность</th>
-          <th>Статус</th>
+          <th>Кол-во заказов</th>
+          <th>Роль</th>
           <th>Действия</th>
         </tr>
       </thead>
@@ -47,7 +49,7 @@
               {{orders}} {{pluralize orders "заказ" "заказа" "заказов"}}
             {{/if}}
           </td>
-          <td><span class="status-badge {{status}}">{{lookupStatusLabel status}}</span></td>
+          <td><span class="status-badge">{{role}}</span></td>
           <td>
             <a class="btn-flat waves-effect tooltipped" data-tooltip="Удалить" data-position="top">
               <i class="material-icons">delete</i>
@@ -81,12 +83,26 @@
     const modal = document.querySelectorAll('.modal');
     M.Modal.init(modal);
 
-    document.querySelectorAll('.filter-item').forEach(item => {
-      item.addEventListener('click', function () {
-        document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
+    // Фильтр по роли
+    const roleFilter = document.getElementById('role-filter');
+    const searchInput = document.getElementById('search');
+    const rows = Array.from(document.querySelectorAll('tbody tr'));
+
+    function applyFilters() {
+      const role = roleFilter.value.toLowerCase();
+      const search = searchInput.value.toLowerCase();
+
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const userRole = row.querySelector('.status-badge')?.textContent.toLowerCase() || '';
+        const matchRole = !role || userRole === role;
+        const matchSearch = !search || text.includes(search);
+        row.style.display = (matchRole && matchSearch) ? '' : 'none';
       });
-    });
+    }
+
+    roleFilter.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
 
     document.querySelectorAll('.btn-flat .material-icons').forEach(btn => {
       if (btn.textContent === 'delete') {
@@ -123,29 +139,8 @@
     margin-bottom: 24px;
   }
 
-  .filter-section {
-    display: flex;
-    gap: 12px;
-  }
-
-  .filter-item {
-    background-color: #f0f0f0;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    font-weight: 500;
-    color: #555;
-  }
-
-  .filter-item:hover {
-    background-color: #e0e0e0;
-  }
-
-  .filter-item.active {
-    background-color: #2196f3;
-    color: white;
-    font-weight: 600;
+  .role-filter-wrapper {
+    min-width: 200px;
   }
 
   .search-container {
@@ -164,11 +159,15 @@
     font-size: 16px;
   }
 
-  .search-container .material-icons.prefix {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    color: #888;
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    background-color: #4caf50;
+    color: white;
+    font-weight: 500;
+    text-transform: capitalize;
   }
 
   .users-table {
@@ -180,16 +179,6 @@
 
   .users-table table {
     margin: 0;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 16px;
-    font-size: 13px;
-    background-color: #4caf50;
-    color: white;
-    font-weight: 500;
   }
 
   @media screen and (max-width: 768px) {

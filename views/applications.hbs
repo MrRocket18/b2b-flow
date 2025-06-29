@@ -36,6 +36,7 @@
           <th class="sortable" data-sort="count">Кол-во</th>
           <th class="sortable" data-sort="price">Цена</th>
           <th class="sortable" data-sort="desired_date">Желаемая дата</th>
+          <th class="sortable" data-sort="estimated_delivery">Ожидаемая доставка</th>
           <th class="sortable" data-sort="status">Статус</th>
           <th>Комментарий</th>
           <th>Действия</th>
@@ -48,6 +49,11 @@
           <td>{{this.count}}</td>
           <td>{{this.price}}</td>
           <td>{{this.desired_date}}</td>
+          <td>
+            {{#if this.estimated_delivery}}
+              {{this.estimated_delivery}}
+            {{else}} — {{/if}}
+          </td>
           <td><span class="status-badge">{{this.status}}</span></td>
           <td>{{this.comment}}</td>
           <td>
@@ -73,6 +79,10 @@
       <div class="input-field">
         <input name="item_name" id="item_name" type="text" required>
         <label for="item_name">Название товара</label>
+      </div>
+      <div class="input-field">
+        <input name="link" id="link" type="url">
+        <label for="link">Ссылка на товар</label>
       </div>
       <div class="input-field">
         <input name="count" id="count" type="number" min="1" required>
@@ -131,11 +141,12 @@
       document.getElementById('price').value = data.price || '';
       document.getElementById('desired_date').value = data.desired_date || '';
       document.getElementById('comment').value = data.comment || '';
+      document.getElementById('link').value = data.link || '';
       M.updateTextFields();
     }
 
     function clearForm() {
-      ['item_name', 'count', 'price', 'desired_date', 'comment'].forEach(id => {
+      ['item_name', 'count', 'price', 'desired_date', 'comment', 'link'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });

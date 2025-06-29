@@ -4,10 +4,16 @@
   <div class="header-section">
     <h1 class="page-title">Архив заказов</h1>
 
-    <div class="filter-section">
-      <div class="filter-item active"><span>Все полученные заказы</span></div>
-      <div class="filter-item"><span>За последний месяц</span></div>
-      <div class="filter-item"><span>За последний год</span></div>
+    <div class="filter-wrapper">
+      <div class="filter-section">
+        <div class="filter-item active"><span>Все полученные заказы</span></div>
+        <div class="filter-item"><span>За последний месяц</span></div>
+        <div class="filter-item"><span>За последний год</span></div>
+      </div>
+
+      <div class="search-container input-field">
+        <input id="search" type="text" placeholder="Поиск по архиву заказов...">
+      </div>
     </div>
   </div>
 
@@ -26,7 +32,7 @@
           <th></th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="archive-body">
         {{#each archive}}
           <tr>
             <form method="POST" action="/archive/update/{{this.id}}">
@@ -69,6 +75,18 @@
       item.addEventListener('click', function () {
         document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
         this.classList.add('active');
+      });
+    });
+
+    // Поиск
+    const searchInput = document.getElementById('search');
+    const rows = Array.from(document.querySelectorAll('#archive-body tr'));
+
+    searchInput.addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
       });
     });
   });
