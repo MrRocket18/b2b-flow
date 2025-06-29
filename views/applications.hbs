@@ -7,17 +7,16 @@
     <div class="filter-search-wrapper">
       <div class="search-container input-field">
         <input id="search" type="text" placeholder="Поиск по заказам...">
-        {{!-- <i class="material-icons prefix">search</i> --}}
       </div>
 
       <div class="input-field status-select-wrapper">
         <select id="status-filter">
           <option value="">Все статусы</option>
-          <option value="На рассмотрении">На рассмотрении</option>
-          <option value="Закупаем">Закупаем</option>
-          <option value="Ждём поставку">Ждём поставку</option>
-          <option value="Готово к получению">Готово к получению</option>
-          <option value="Получен">Получен</option>
+          <option value=0>На рассмотрении</option>
+          <option value=1>Закупаем</option>
+          <option value=2>Ждём поставку</option>
+          <option value=3>Готово к получению</option>
+          <option value=4>Получен</option>
         </select>
         <label>Фильтр по статусу</label>
       </div>
@@ -44,34 +43,48 @@
       </thead>
       <tbody>
         {{#each requests}}
-        <tr data-request='{{json this}}'>
-          <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
-          <td>{{this.count}}</td>
-          <td>{{this.price}}</td>
-          <td>{{this.desired_date}}</td>
-          <td>
-            {{#if this.estimated_delivery}}
-              {{this.estimated_delivery}}
-            {{else}} — {{/if}}
-          </td>
-          <td><span class="status-badge">{{this.status}}</span></td>
-          <td>{{this.comment}}</td>
-          <td>
-            <a class="btn-flat  edit-btn" >
-              <i class="material-icons">edit</i>
-            </a>
-            <a class="btn-flat  delete-btn" href="/applications/delete/{{this.ID}}" >
-              <i class="material-icons red-text">delete</i>
-            </a>
-          </td>
-        </tr>
+          {{#if (isEqual this.status 4)}}
+          {{else}}
+            <tr data-request='{
+              "ID": "{{this.ID}}",
+              "item_name": "{{this.item_name}}",
+              "count": "{{this.count}}",
+              "price": "{{this.price}}",
+              "desired_date": "{{this.desired_date}}",
+              "comment": "{{this.comment}}",
+              "status": "{{this.status}}"
+            }'>
+              <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
+              <td>{{this.count}}</td>
+              <td>{{this.price}}</td>
+              <td>{{this.desired_date}}</td>
+              <td>
+                <span value="{{this.status}}" class="status-badge">
+                  {{#if (isEqual this.status 0)}} На рассмотрении {{/if}}
+                  {{#if (isEqual this.status 1)}} Закупаем {{/if}}
+                  {{#if (isEqual this.status 2)}} Ждём поставку {{/if}}
+                  {{#if (isEqual this.status 3)}} Готово к получению {{/if}}
+                  {{#if (isEqual this.status 4)}} Получен {{/if}}
+                </span>
+              </td>
+              <td>{{this.comment}}</td>
+              <td>
+                <a class="btn-flat edit-btn">
+                  <i class="material-icons">edit</i>
+                </a>
+                <button class="btn-flat delete-btn" data-id="{{this.ID}}">
+                  <i class="material-icons red-text">delete</i>
+                </button>
+              </td>
+            </tr>
+          {{/if}}
         {{/each}}
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- Модальное окно создания/редактирования заказа -->
+<!-- Модальное окно создания/редактирования -->
 <div id="create-modal" class="modal">
   <form id="order-form" method="POST">
     <div class="modal-content">
@@ -115,34 +128,42 @@
     const modalInstance = M.Modal.getInstance(document.getElementById('create-modal'));
     const form = document.getElementById('order-form');
 
-    // Очистить форму при создании
+    // Открытие модального окна для создания
     document.querySelector('a.modal-trigger').addEventListener('click', () => {
       document.getElementById('modal-title').textContent = 'Новый заказ';
-      form.action = '/applications/create';
+      form.action = '/create';
       clearForm();
       modalInstance.open();
     });
 
-    // Редактировать
+    // Редактирование
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', function () {
         const row = this.closest('tr');
         const data = JSON.parse(row.dataset.request);
         document.getElementById('modal-title').textContent = 'Редактировать заказ';
-        form.action = `/applications/edit/${data.ID}`;
+        form.action = `/edit/${data.ID}`;
         fillForm(data);
         modalInstance.open();
       });
     });
 
+    // Функция заполнения формы
     function fillForm(data) {
       document.getElementById('item_name').value = data.item_name || '';
       document.getElementById('count').value = data.count || '';
       document.getElementById('price').value = data.price || '';
-      document.getElementById('desired_date').value = data.desired_date || '';
       document.getElementById('comment').value = data.comment || '';
       document.getElementById('link').value = data.link || '';
-      M.updateTextFields();
+      // Переводим дату из формата 'дд.мм.гггг' в 'YYYY-MM-DD'
+      if (data.desired_date && data.desired_date.includes('.')) {
+        const [day, month, year] = data.desired_date.split('.');
+        document.getElementById('desired_date').value = `${year}-${month}-${day}`;
+      } else {
+        document.getElementById('desired_date').value = data.desired_date || '';
+      }
+
+      M.updateTextFields(); // обновляем стили Materialize
     }
 
     function clearForm() {
@@ -152,6 +173,27 @@
       });
       M.updateTextFields();
     }
+
+    // Удаление
+    document.querySelectorAll('.delete-btn').forEach(button => {
+      button.addEventListener('click', function (event) {
+        event.preventDefault();
+        const requestId = this.dataset.id;
+        if (confirm('Вы уверены, что хотите удалить эту заявку?')) {
+          fetch('/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ID: requestId })
+          }).then(response => {
+            if (response.ok) window.location.href = '/applications';
+            else alert('Ошибка при удалении заявки.');
+          }).catch(error => {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при удалении.');
+          });
+        }
+      });
+    });
 
     // Фильтрация
     const searchInput = document.getElementById('search');
@@ -164,7 +206,7 @@
 
       rows.forEach(row => {
         const text = row.innerText.toLowerCase();
-        const status = row.querySelector('.status-badge')?.textContent || '';
+        const status = row.querySelector('.status-badge')?.getAttribute('value') || '';
         const matchesSearch = !search || text.includes(search);
         const matchesStatus = !selectedStatus || status === selectedStatus;
         row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
