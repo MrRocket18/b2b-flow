@@ -246,16 +246,27 @@ export async function GetAllRequest() {
 }
 
 export async function updateOrderById(id, { delivery_date, status, comment }) {
-    const updateQuery = `
-        UPDATE Request SET 
-          delivery_date = ?,
-          status = ?,
-          comment = ?
-        WHERE id = ?
-    `;
+  let updateQuery=''
+  let values = []
+  if (delivery_date !=""){  
+    updateQuery = `
+          UPDATE Request SET 
+            delivery_date = ?,
+            status = ?,
+            comment = ?
+          WHERE id = ?
+      `;
+      values = [delivery_date, status, comment, id];
+  }else{
+    updateQuery = `
+          UPDATE Request SET
+            status = ?,
+            comment = ?
+          WHERE id = ?
+      `;
+      values = [status, comment, id];
+  }
     const selectQuery = `SELECT * FROM Request WHERE id = ?`;
-
-    const values = [delivery_date, status, comment, id];
 
     try {
         // Сначала обновляем

@@ -371,7 +371,6 @@ app.post('/admin/update/:id', async (req, res) => {
     }
      console.log(delivery_date)
     try {
-        // Вызываем метод из db.mjs
         const success = await db.updateOrderById(orderId, {
             delivery_date,
             status: parseInt(status),
