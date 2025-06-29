@@ -463,3 +463,19 @@ h1 {
     color: white;
     font-weight: 500;
   }
+
+  #search-input {
+    color: white;
+  }
+
+#search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+  }
+#search {
+    color: white !important;
+    background-color: transparent;
+  }
+
+#search::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
