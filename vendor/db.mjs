@@ -175,10 +175,11 @@ export async function GetArchived() {
         CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
         r.price * r.count AS total,
         r.item_name,
-        r.link
+        r.link, 
+        r.status
       FROM Request r
       JOIN Users u ON r.user_id = u.ID
-      WHERE r.status = 'Получен'
+      WHERE r.status = 4
       ORDER BY r.delivery_date DESC`
     );
     return rows;
@@ -244,15 +245,61 @@ export async function GetAllRequest() {
   }
 }
 
-// function formatDateToDDMMYYYY(date) {
-//         if (!(date instanceof Date) || isNaN(date.getTime())) {
-//             return '';
-//         }
+export async function updateOrderById(id, { delivery_date, status, comment }) {
+  let updateQuery=''
+  let values = []
+  if (delivery_date !=""){  
+    updateQuery = `
+          UPDATE Request SET 
+            delivery_date = ?,
+            status = ?,
+            comment = ?
+          WHERE id = ?
+      `;
+      values = [delivery_date, status, comment, id];
+  }else{
+    updateQuery = `
+          UPDATE Request SET
+            status = ?,
+            comment = ?
+          WHERE id = ?
+      `;
+      values = [status, comment, id];
+  }
+    const selectQuery = `SELECT * FROM Request WHERE id = ?`;
 
-//         const day = String(date.getDate()).padStart(2, '0');
-//         const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы с 0
-//         const year = date.getFullYear();
+    try {
+        // Сначала обновляем
+        await pool.query(updateQuery, values);
 
-//         return `${day}.${month}.${year}`;
-//     }
+        // Затем получаем обновлённую запись
+        const [rows] = await pool.query(selectQuery, [id]);
 
+        return rows[0] || null;
+    } catch (err) {
+        throw err;
+    }
+}
+
+export async function updateStatusById(id, {status}) {
+    const updateQuery = `
+        UPDATE Request SET 
+          status = ?
+        WHERE id = ?
+    `;
+    const selectQuery = `SELECT * FROM Request WHERE id = ?`;
+
+    const values = [status, id];
+
+    try {
+        // Сначала обновляем
+        await pool.query(updateQuery, values);
+
+        // Затем получаем обновлённую запись
+        const [rows] = await pool.query(selectQuery, [id]);
+
+        return rows[0] || null;
+    } catch (err) {
+        throw err;
+    }
+}
