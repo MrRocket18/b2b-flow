@@ -35,6 +35,7 @@
           <th class="sortable" data-sort="count">Кол-во</th>
           <th class="sortable" data-sort="price">Цена</th>
           <th class="sortable" data-sort="desired_date">Желаемая дата</th>
+          <th class="sortable" data-sort="estimated_delivery">Ожидаемая доставка</th>
           <th class="sortable" data-sort="status">Статус</th>
           <th>Комментарий</th>
           <th>Действия</th>
@@ -93,6 +94,10 @@
         <label for="item_name">Название товара</label>
       </div>
       <div class="input-field">
+        <input name="link" id="link" type="url">
+        <label for="link">Ссылка на товар</label>
+      </div>
+      <div class="input-field">
         <input name="count" id="count" type="number" min="1" required>
         <label for="count">Количество</label>
       </div>
@@ -149,7 +154,7 @@
       document.getElementById('count').value = data.count || '';
       document.getElementById('price').value = data.price || '';
       document.getElementById('comment').value = data.comment || '';
-
+      document.getElementById('link').value = data.link || '';
       // Переводим дату из формата 'дд.мм.гггг' в 'YYYY-MM-DD'
       if (data.desired_date && data.desired_date.includes('.')) {
         const [day, month, year] = data.desired_date.split('.');
@@ -162,7 +167,7 @@
     }
 
     function clearForm() {
-      ['item_name', 'count', 'price', 'desired_date', 'comment'].forEach(id => {
+      ['item_name', 'count', 'price', 'desired_date', 'comment', 'link'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
