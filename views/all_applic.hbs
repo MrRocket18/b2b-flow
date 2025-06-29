@@ -1,3 +1,5 @@
+{{!-- views/all_applic.hbs --}}
+
 <div class="orders-page-container">
   <h1 class="orders-page-title">Все заказы</h1>
 
@@ -33,52 +35,70 @@
     <div class="input-field col s6 m6">
       <select id="status-filter">
         <option value="">Все статусы</option>
-        <option value="На рассмотрении">На рассмотрении</option>
-        <option value="Закупаем">Закупаем</option>
-        <option value="Ждём поставку">Ждём поставку</option>
-        <option value="Готово к получению">Готово к получению</option>
-        <option value="Получен">Получен</option>
+        <option value= 0>На рассмотрении</option>
+        <option value= 1>Закупаем</option>
+        <option value= 2>Ждём поставку</option>
+        <option value= 3>Готово к получению</option>
+        <option value= 4>Получен</option>
       </select>
       <label>Фильтр по статусу</label>
     </div>
   </div>
 
   <!-- Основная таблица -->
-  <div class="card-panel white lighten-1 orders-container">
-    <table class="striped highlight responsive-table" id="orders-table">
-      <thead>
-        <tr>
-          <th class="sortable" data-sort="item_name">Название</th>
-          <th class="sortable" data-sort="count">Кол-во</th>
-          <th class="sortable" data-sort="price">Цена</th>
-          <th class="sortable" data-sort="desired_date">Желаемая дата</th>
-          <th>ID пользователя</th>
-          <th class="sortable" data-sort="status">Статус</th>
-          <th>Комментарий</th>
-          <th>Действия</th>
-        </tr>
-      </thead>
-      <tbody id="orders-body">
-        {{#each requests}}
-        <tr>
+  <!-- Основная таблица -->
+<div class="card-panel white lighten-1 orders-container">
+  <table class="striped highlight responsive-table" id="orders-table">
+    <thead>
+      <tr>
+        <th class="sortable" data-sort="item_name">Название</th>
+        <th class="sortable" data-sort="count">Кол-во</th>
+        <th class="sortable" data-sort="price">Цена</th>
+        <th class="sortable" data-sort="desired_date">Желаемая дата</th>
+        <th class="sortable">Предполагаемая дата</th>
+        <th>ID пользователя</th>
+        <th class="sortable" data-sort="status">Статус</th>
+        <th>Комментарий</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="orders-body">
+      {{#each requests}}
+      <tr>
+        <form method="POST" action="/admin/update/{{this.ID}}">
           <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
           <td>{{this.count}}</td>
           <td>{{this.price}}</td>
           <td>{{this.desired_date}}</td>
-          <td>{{this.user_id}}</td>
-          <td><span class="status-badge">{{this.status}}</span></td>
-          <td>{{this.comment}}</td>
           <td>
-            <button class="btn-small blue lighten-2 change-status-btn" data-id="{{this.ID}}" data-status="{{this.status}}">
-              Изменить
+            <input type="date" id="delivery_date" name="delivery_date" value="{{this.delivery_date}}" {{this.delivery_date}}>
+            {{this.delivery_date}}
+          </td>
+          <td>{{this.user_fullname}}</td>
+          <td>
+            <select id = "status" name="status" class="browser-default">
+              <option value= 0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
+              <option value= 1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
+              <option value= 2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
+              <option value= 3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
+              <option value= 4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" name="comment" value="{{this.comment}}">
+          </td>
+          <td>
+            <button type="submit" class="btn-flat tooltipped" data-tooltip="Сохранить изменения">
+              <i class="material-icons green-text">check</i>
             </button>
           </td>
-        </tr>
-        {{/each}}
-      </tbody>
-    </table>
-  </div>
+        </form>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
 </div>
+
 
 <!-- MODAL -->
 <div id="status-modal" class="modal">
@@ -131,6 +151,7 @@
 
     const searchInput = document.getElementById('search-input');
     const statusFilter = document.getElementById('status-filter');
+    
     const rows = Array.from(document.querySelectorAll('#orders-body tr'));
     let sortField = null;
     let sortAsc = true;
@@ -142,7 +163,7 @@
       rows.forEach(row => {
         const text = row.innerText.toLowerCase();
         const matchesSearch = term === '' || text.includes(term);
-        const matchesStatus = selectedStatus === '' || row.cells[5].innerText === selectedStatus;
+        const matchesStatus = selectedStatus === '' || row.cells[6]?.querySelector('select').value === selectedStatus;
         row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
       });
     }

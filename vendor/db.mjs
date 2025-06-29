@@ -101,7 +101,8 @@ export async function GetUserRequests(user_id) {
       link, 
       DATE_FORMAT(desired_date, '%d.%m.%Y') AS desired_date,
       DATE_FORMAT(delivery_date, '%d.%m.%Y') AS delivery_date,
-      comment 
+      status,
+      comment
       FROM Request 
       WHERE user_id = ?`, [user_id]);
 
@@ -136,11 +137,11 @@ export async function updateRequestById(id, updatedData) {
         const count = Number(updatedData.count);
         const price = Number(updatedData.price);
 
-        const desiredDate = formatDate(updatedData.desired_date);
+        //const desiredDate = formatDate(updatedData.desired_date);
+        
+        const query = `UPDATE Request SET item_name = ?, count = ?, price = ?, desired_date = ?, comment = ? WHERE id = ?`;
 
-        const query = `UPDATE Request SET item_name = ?, count = ?, price = ?, link = ?, desired_date = ?, comment = ? WHERE id = ?`;
-
-        const values = [updatedData.item_name, count, price, updatedData.link, desiredDate, updatedData.comment, id];
+        const values = [updatedData.item_name, count, price, updatedData.desired_date, updatedData.comment, id]; 
 
         const [result] = await pool.execute(query, values);
 
@@ -174,10 +175,11 @@ export async function GetArchived() {
         CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
         r.price * r.count AS total,
         r.item_name,
-        r.link
+        r.link, 
+        r.status
       FROM Request r
       JOIN Users u ON r.user_id = u.ID
-      WHERE r.status = 'Получен'
+      WHERE r.status = 4
       ORDER BY r.delivery_date DESC`
     );
     return rows;
@@ -243,15 +245,61 @@ export async function GetAllRequest() {
   }
 }
 
-// function formatDateToDDMMYYYY(date) {
-//         if (!(date instanceof Date) || isNaN(date.getTime())) {
-//             return '';
-//         }
+export async function updateOrderById(id, { delivery_date, status, comment }) {
+  let updateQuery=''
+  let values = []
+  if (delivery_date !=""){  
+    updateQuery = `
+          UPDATE Request SET 
+            delivery_date = ?,
+            status = ?,
+            comment = ?
+          WHERE id = ?
+      `;
+      values = [delivery_date, status, comment, id];
+  }else{
+    updateQuery = `
+          UPDATE Request SET
+            status = ?,
+            comment = ?
+          WHERE id = ?
+      `;
+      values = [status, comment, id];
+  }
+    const selectQuery = `SELECT * FROM Request WHERE id = ?`;
 
-//         const day = String(date.getDate()).padStart(2, '0');
-//         const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы с 0
-//         const year = date.getFullYear();
+    try {
+        // Сначала обновляем
+        await pool.query(updateQuery, values);
 
-//         return `${day}.${month}.${year}`;
-//     }
+        // Затем получаем обновлённую запись
+        const [rows] = await pool.query(selectQuery, [id]);
 
+        return rows[0] || null;
+    } catch (err) {
+        throw err;
+    }
+}
+
+export async function updateStatusById(id, {status}) {
+    const updateQuery = `
+        UPDATE Request SET 
+          status = ?
+        WHERE id = ?
+    `;
+    const selectQuery = `SELECT * FROM Request WHERE id = ?`;
+
+    const values = [status, id];
+
+    try {
+        // Сначала обновляем
+        await pool.query(updateQuery, values);
+
+        // Затем получаем обновлённую запись
+        const [rows] = await pool.query(selectQuery, [id]);
+
+        return rows[0] || null;
+    } catch (err) {
+        throw err;
+    }
+}
