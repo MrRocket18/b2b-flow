@@ -28,13 +28,30 @@ import { request } from 'http';
 
 const app = express();
 const hbs = exphbs.create({
-  defaultLayout: 'main', 
-  extname: '.hbs',        
+  defaultLayout: 'main',
+  extname: 'hbs',
   helpers: {
-   ...allHelpers,
-   isEqual: (a, b) => a == b,
+    ...allHelpers,
+    isEqual: (a, b) => a === b,
+    lookupStatusLabel: (status) => {
+      switch (status) {
+        case 'active': return 'Активен';
+        case 'inactive': return 'Неактивен';
+        case 'pending': return 'На проверке';
+        default: return status;
+      }
+    },
+    pluralize: (n, one, few, many) => {
+      const mod10 = n % 10, mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return one;
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+      return many;
+    },
+    json: function(context) {
+      return JSON.stringify(context);
+    }
   }
-}); // используем хелперы для определение статуса в navbar
+});
 
 const TEMP_FOLDER = path.join(appDir, 'public/temp');
 
@@ -156,7 +173,6 @@ app.get('/applications', async (req, res) => {
 
   try {
     const requests = await db.GetUserRequests(req.session.uid);
-
     res.render('applications', {
       session: req.session,
       role: req.session.role,
@@ -278,9 +294,8 @@ app.get('/edit', async (req, res) => {
   }
 });
 
-app.post('/edit', async (req, res) => {
-    console.log('req.body:', req.body); 
-    const id = req.body.id;
+app.post('/edit/:ID', async (req, res) => {
+    const id = req.params.ID;
     console.log('ID:', id); 
     if (!id || isNaN(Number(id))) {
         return res.status(400).json({ error: 'Неверный ID' });
@@ -291,11 +306,10 @@ app.post('/edit', async (req, res) => {
             item_name: req.body.item_name,
             count: Number(req.body.count),
             price: Number(req.body.price),
-            link: req.body.link,
             desired_date: req.body.desired_date,
             comment: req.body.comment
         };
-
+        console.log(updatedData)
         const success = await db.updateRequestById(Number(id), updatedData);
 
         if (success) {
@@ -310,8 +324,8 @@ app.post('/edit', async (req, res) => {
 });
 
 app.post('/delete', async (req, res) => {
-    const id = req.body.id;
-
+    const id = req.body.ID;
+    console.log(id)
     if (!id || isNaN(Number(id))) {
         return res.status(400).send('Неверный ID');
     }
@@ -349,7 +363,56 @@ app.post('/delete-user', async (req, res) => {
     }
 });
 
-app.get('/logout',(req,res)=> {
+app.post('/admin/update/:id', async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const { delivery_date, status, comment } = req.body;
+    if (!orderId || isNaN(orderId)) {
+        return res.status(400).send('Неверный ID');
+    }
+     console.log(delivery_date)
+    try {
+        const success = await db.updateOrderById(orderId, {
+            delivery_date,
+            status: parseInt(status),
+            comment
+        });
+  
+        if (success) {
+            return res.redirect('/manager'); // или '/applications'
+        } else {
+            return res.status(404).send('Заказ не найден');
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении заказа:', error);
+        return res.status(500).send('Ошибка сервера');
+    }
+});
+
+app.post('/archive/update/:id', async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const {status} = req.body;
+    if (!orderId || isNaN(orderId)) {
+        return res.status(400).send('Неверный ID');
+    }
+
+    try {
+        // Вызываем метод из db.mjs
+        const success = await db.updateStatusById(orderId, {
+            status: parseInt(status)
+        });
+
+        if (success) {
+            return res.redirect('/arch'); 
+        } else {
+            return res.status(404).send('Заказ не найден');
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении заказа:', error);
+        return res.status(500).send('Ошибка сервера');
+    }
+});
+
+app.post('/logout',(req,res)=> {
   req.session.role = "";
   req.session.uid = undefined;
   req.session.name = "";
