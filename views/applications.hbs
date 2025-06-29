@@ -13,11 +13,11 @@
       <div class="input-field status-select-wrapper">
         <select id="status-filter">
           <option value="">Все статусы</option>
-          <option value="На рассмотрении">На рассмотрении</option>
-          <option value="Закупаем">Закупаем</option>
-          <option value="Ждём поставку">Ждём поставку</option>
-          <option value="Готово к получению">Готово к получению</option>
-          <option value="Получен">Получен</option>
+          <option value= 0>На рассмотрении</option>
+          <option value= 1>Закупаем</option>
+          <option value= 2>Ждём поставку</option>
+          <option value= 3>Готово к получению</option>
+          <option value= 4>Получен</option>
         </select>
         <label>Фильтр по статусу</label>
       </div>
@@ -43,22 +43,33 @@
       </thead>
       <tbody>
         {{#each requests}}
-        <tr data-request='{{json this}}'>
-          <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
-          <td>{{this.count}}</td>
-          <td>{{this.price}}</td>
-          <td>{{this.desired_date}}</td>
-          <td><span class="status-badge">{{this.status}}</span></td>
-          <td>{{this.comment}}</td>
-          <td>
-            <a class="btn-flat  edit-btn" >
-              <i class="material-icons">edit</i>
-            </a>
-            <button class="btn-flat delete-btn" data-id="{{this.ID}}">
-              <i class="material-icons red-text">delete</i>
-            </button>
-          </td>
-        </tr>
+          {{#if (isEqual this.status 4)}}
+          {{else}}
+          <tr data-request='{{json this}}'>
+            <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
+            <td>{{this.count}}</td>
+            <td>{{this.price}}</td>
+            <td>{{this.desired_date}}</td>
+            <td >
+              <span value= {{this.status}} class="status-badge">
+                {{#if (isEqual this.status 0)}} На рассмотрении {{/if}}
+                {{#if (isEqual this.status 1)}} Закупаем {{/if}}
+                {{#if (isEqual this.status 2)}} Ждём поставку {{/if}}
+                {{#if (isEqual this.status 3)}} Готово к получению {{/if}}
+                {{#if (isEqual this.status 4)}} Получен {{/if}}
+              </span>
+            </td>
+            <td>{{this.comment}}</td>
+            <td>
+              <a class="btn-flat  edit-btn" >
+                <i class="material-icons">edit</i>
+              </a>
+              <button class="btn-flat delete-btn" data-id="{{this.ID}}">
+                <i class="material-icons red-text">delete</i>
+              </button>
+            </td>
+          </tr>
+          {{/if}}
         {{/each}}
       </tbody>
     </table>
@@ -187,7 +198,7 @@
 
       rows.forEach(row => {
         const text = row.innerText.toLowerCase();
-        const status = row.querySelector('.status-badge')?.textContent || '';
+        const status = row.querySelector('.status-badge')?.getAttribute('value') || '';
         const matchesSearch = !search || text.includes(search);
         const matchesStatus = !selectedStatus || status === selectedStatus;
         row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';

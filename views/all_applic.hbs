@@ -35,11 +35,11 @@
     <div class="input-field col s6 m6">
       <select id="status-filter">
         <option value="">Все статусы</option>
-        <option value="На рассмотрении">На рассмотрении</option>
-        <option value="Закупаем">Закупаем</option>
-        <option value="Ждём поставку">Ждём поставку</option>
-        <option value="Готово к получению">Готово к получению</option>
-        <option value="Получен">Получен</option>
+        <option value= 0>На рассмотрении</option>
+        <option value= 1>Закупаем</option>
+        <option value= 2>Ждём поставку</option>
+        <option value= 3>Готово к получению</option>
+        <option value= 4>Получен</option>
       </select>
       <label>Фильтр по статусу</label>
     </div>
@@ -76,11 +76,11 @@
           <td>{{this.user_fullname}}</td>
           <td>
             <select name="status" class="browser-default">
-              <option value="На рассмотрении" {{#if (isEqual this.status "На рассмотрении")}}selected{{/if}}>На рассмотрении</option>
-              <option value="Закупаем" {{#if (isEqual this.status "Закупаем")}}selected{{/if}}>Закупаем</option>
-              <option value="Ждём поставку" {{#if (isEqual this.status "Ждём поставку")}}selected{{/if}}>Ждём поставку</option>
-              <option value="Готово к получению" {{#if (isEqual this.status "Готово к получению")}}selected{{/if}}>Готово к получению</option>
-              <option value="Получен" {{#if (isEqual this.status "Получен")}}selected{{/if}}>Получен</option>
+              <option value= 0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
+              <option value= 1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
+              <option value= 2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
+              <option value= 3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
+              <option value= 4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
             </select>
           </td>
           <td>
