@@ -363,6 +363,56 @@ app.post('/delete-user', async (req, res) => {
     }
 });
 
+app.post('/admin/update/:id', async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const { delivery_date, status, comment } = req.body;
+    if (!orderId || isNaN(orderId)) {
+        return res.status(400).send('Неверный ID');
+    }
+     console.log(delivery_date)
+    try {
+        // Вызываем метод из db.mjs
+        const success = await db.updateOrderById(orderId, {
+            delivery_date,
+            status: parseInt(status),
+            comment
+        });
+  
+        if (success) {
+            return res.redirect('/manager'); // или '/applications'
+        } else {
+            return res.status(404).send('Заказ не найден');
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении заказа:', error);
+        return res.status(500).send('Ошибка сервера');
+    }
+});
+
+app.post('/archive/update/:id', async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const {status} = req.body;
+    if (!orderId || isNaN(orderId)) {
+        return res.status(400).send('Неверный ID');
+    }
+
+    try {
+        // Вызываем метод из db.mjs
+        const success = await db.updateStatusById(orderId, {
+            status: parseInt(status)
+        });
+
+        if (success) {
+            return res.redirect('/arch'); 
+        } else {
+            return res.status(404).send('Заказ не найден');
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении заказа:', error);
+        return res.status(500).send('Ошибка сервера');
+    }
+});
+
 app.post('/logout',(req,res)=> {
   req.session.role = "";
   req.session.uid = undefined;

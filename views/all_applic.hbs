@@ -71,11 +71,12 @@
           <td>{{this.price}}</td>
           <td>{{this.desired_date}}</td>
           <td>
-            <input type="date" name="expected_date" value="{{this.delivery_date}}">
+            <input type="date" id="delivery_date" name="delivery_date" value="{{this.delivery_date}}">
+            {{this.delivery_date}}
           </td>
           <td>{{this.user_fullname}}</td>
           <td>
-            <select name="status" class="browser-default">
+            <select id = "status" name="status" class="browser-default">
               <option value= 0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
               <option value= 1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
               <option value= 2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
@@ -150,6 +151,7 @@
 
     const searchInput = document.getElementById('search-input');
     const statusFilter = document.getElementById('status-filter');
+    
     const rows = Array.from(document.querySelectorAll('#orders-body tr'));
     let sortField = null;
     let sortAsc = true;
@@ -161,7 +163,7 @@
       rows.forEach(row => {
         const text = row.innerText.toLowerCase();
         const matchesSearch = term === '' || text.includes(term);
-        const matchesStatus = selectedStatus === '' || row.cells[5].innerText === selectedStatus;
+        const matchesStatus = selectedStatus === '' || row.cells[6]?.querySelector('select').value === selectedStatus;
         row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
       });
     }
