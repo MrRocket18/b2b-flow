@@ -42,7 +42,7 @@
         <option value= 2>Ждём поставку</option>
         <option value= 3>Готово к получению</option>
         <option value= 4>Получен</option>
-        <option value=4>Отменено</option>
+        <option value= 5>Отменено</option>
       </select>
       <label>Фильтр по статусу</label>
     </div>
@@ -70,7 +70,7 @@
         {{#if (isEqual this.status 4)}}
         {{else}}
         <tr>
-          <form method="POST" action="/admin/update/{{this.ID}}">
+          <form method="POST" action="/admin-update/{{this.ID}}">
             <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
             <td>{{this.count}}</td>
             <td>{{this.price}}</td>
