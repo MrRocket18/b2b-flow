@@ -194,14 +194,16 @@ app.get('/manager', async (req, res) => {
     return res.redirect('/applications');
   } 
   try {
-    
+
     const today = new Date();
     const todayDate = today.toISOString().slice(0, 10);
     const requests = await db.GetAllRequest();
+    const summary = await db.GetAllStatuses();
     res.render('all_applic', {
       session: req.session,
       role: req.session.role,
       title: 'My requests',
+      summary: summary,
       requests: requests,
       todayDate: todayDate
     });
@@ -239,23 +241,8 @@ app.get('/base', async (req, res) => {
   });
 });
 
-app.get('/create', (req, res) => {
-  if(req.session.role != 0)
-  {
-    console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
-    return res.redirect('/manager')
-  }
-  res.render('creating', {
-    session: req.session,
-    role: req.session.role,
-    title: 'Create request'
-  });
-});
-
 app.post('/create', async (req, res) => {
   try {
-    console.log("req.body:", req.body);
-
     const user_id = req.session.uid;
     const { item_name, count, price, link, desired_date, comment } = req.body;
 
@@ -270,6 +257,26 @@ app.post('/create', async (req, res) => {
   } catch (error) {
     console.error("Полная ошибка:", error);
     return res.status(500).send("Произошла внутренняя ошибка сервера");
+  }
+});
+
+app.post('/order/cancel/:id', async (req, res) => {
+  const orderId = parseInt(req.params.id);
+
+  if (isNaN(orderId)) {
+    return res.status(400).send('Неверный ID');
+  }
+
+  try {
+    const success = await db.updateStatusById(orderId, { status: 5 }); // 5 — Отменено
+    if (success) {
+      return res.send({ ok: true });
+    } else {
+      return res.status(404).send('Заказ не найден');
+    }
+  } catch (err) {
+    console.error('Ошибка при отмене заказа:', err);
+    return res.status(500).send('Ошибка сервера');
   }
 });
 
@@ -327,25 +334,6 @@ app.post('/edit/:ID', async (req, res) => {
     } catch (error) {
         console.error('Ошибка при обновлении заявки:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
-    }
-});
-
-app.post('/delete', async (req, res) => {
-    const id = req.body.ID;
-    console.log(id)
-    if (!id || isNaN(Number(id))) {
-        return res.status(400).send('Неверный ID');
-    }
-
-    try {
-        const success = await db.deleteRequestById(Number(id));
-
-        if (success) {
-            return res.redirect('/applications'); 
-        }
-    } catch (error) {
-        console.error('Ошибка при удалении заявки:', error);
-        return res.status(500).send('Ошибка сервера');
     }
 });
 

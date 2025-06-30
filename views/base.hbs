@@ -8,8 +8,8 @@
       <div class="input-field role-filter-wrapper">
         <select id="role-filter">
           <option value="">Все роли</option>
-          <option value="admin">Администраторы</option>
-          <option value="user">Пользователи</option>
+          <option value= 1>Администраторы</option>
+          <option value= 0>Пользователи</option>
         </select>
         <label>Фильтр по роли</label>
       </div>
@@ -49,7 +49,7 @@
               {{orders}} {{pluralize orders "заказ" "заказа" "заказов"}}
             {{/if}}
           </td>
-          <td><span class="status-badge {{role}}">
+          <td><span class="status-badge" {{#if (eq role 1)}}value = 1 {{else}} value= 0 {{/if}}>
             {{#if (eq role 1)}}
               {{lookupStatusLabel "Администратор"}}
             {{else}}
@@ -99,7 +99,7 @@
 
       rows.forEach(row => {
         const text = row.innerText.toLowerCase();
-        const userRole = row.querySelector('.status-badge')?.textContent.toLowerCase() || '';
+        const userRole = row.querySelector('.status-badge')?.getAttribute('value') || '';
         const matchRole = !role || userRole === role;
         const matchSearch = !search || text.includes(search);
         row.style.display = (matchRole && matchSearch) ? '' : 'none';
@@ -140,11 +140,11 @@
       });
 
       if (response.redirected) {
-        window.location.href = response.url; // Перенаправление после успешного удаления
+        window.location.href = response.url; 
       } else {
         const result = await response.text();
         if (result === 'OK') {
-          window.location.reload(); // Или лучше перейти на /users
+          window.location.reload(); 
         } else {
           alert('Ошибка при удалении');
         }

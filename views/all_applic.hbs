@@ -17,11 +17,13 @@
       </thead>
       <tbody>
         <tr>
-          <td>{{summary.new}}</td>
-          <td>{{summary.processing}}</td>
-          <td>{{summary.completed}}</td>
-          <td>{{summary.cancelled}}</td>
-          <td>{{summary.total}}</td>
+          {{#each summary}}
+            <td>{{this.new}}</td>
+            <td>{{this.processing}}</td>
+            <td>{{this.completed}}</td>
+            <td>{{this.cancelled}}</td>
+            <td>{{this.total}}</td>
+            {{/each}}
         </tr>
       </tbody>
     </table>

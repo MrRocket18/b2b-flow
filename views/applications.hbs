@@ -52,8 +52,10 @@
               "count": "{{this.count}}",
               "price": "{{this.price}}",
               "desired_date": "{{this.desired_date}}",
+              "delivery_date": "{{this.delivery_date}}",
               "comment": "{{this.comment}}",
-              "status": "{{this.status}}"
+              "status": "{{this.status}}",
+              "link": "{{this.link}}"
             }'>
               <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
               <td>{{this.count}}</td>
@@ -72,14 +74,14 @@
               </td>
               <td>{{this.comment}}</td>
               <td>
-                {{#if (isEqual this.status 0)}}
-                <a class="btn-flat edit-btn">
-                  <i class="material-icons">edit</i>
-                </a>
+                {{#if (eq this.status 0)}}
+                  <a class="btn-flat edit-btn">
+                    <i class="material-icons">edit</i>
+                  </a>
+                  <a class="btn-flat cancel-btn" data-id="{{this.ID}}">
+                    <i class="material-icons red-text">cancel</i>
+                  </a>
                 {{/if}}
-                <button class="btn-flat delete-btn" data-id="{{this.ID}}">
-                  <i class="material-icons red-text">delete</i>
-                </button>
               </td>
             </tr>
           {{/if}}
@@ -111,7 +113,7 @@
         <label for="price">Цена</label>
       </div>
       <div class="input-field">
-        <input name="desired_date"  id ="desired_date" type="date" min="{{todayDate}}" required>
+        <input name="desired_date" id="desired_date" type="date" min="{{todayDate}}" required>
         <label for="desired_date">Желаемая дата</label>
       </div>
       <div class="input-field">
@@ -126,21 +128,26 @@
   </form>
 </div>
 
+<!-- Модальное окно подтверждения отмены -->
+<div id="cancel-modal" class="modal">
+  <div class="modal-content">
+    <h5>Подтверждение отмены</h5>
+    <p>Вы уверены, что хотите отменить этот заказ?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Отмена</a>
+    <a href="#!" id="confirm-cancel-btn" class="waves-effect waves-red btn-flat">Отменить заказ</a>
+  </div>
+</div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     M.AutoInit();
-  // Ограничение на дату из прошлого
-    const deliveryDateInput = document.getElementById('desired_date');
-    if (deliveryDateInput) {
-      const today = new Date();
-      const todayDate = today.toISOString().slice(0, 10);
-      deliveryDateInput.setAttribute('min', todayDate); 
-    }
-  
+
     const modalInstance = M.Modal.getInstance(document.getElementById('create-modal'));
     const form = document.getElementById('order-form');
 
-    // Открытие модального окна для создания
+    // --- Работа с формой редактирования и создания ---
     document.querySelector('a.modal-trigger').addEventListener('click', () => {
       document.getElementById('modal-title').textContent = 'Новый заказ';
       form.action = '/create';
@@ -148,7 +155,6 @@
       modalInstance.open();
     });
 
-    // Редактирование
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', function () {
         const row = this.closest('tr');
@@ -157,26 +163,32 @@
         form.action = `/edit/${data.ID}`;
         fillForm(data);
         modalInstance.open();
-                
       });
     });
 
-    // Функция заполнения формы
     function fillForm(data) {
       document.getElementById('item_name').value = data.item_name || '';
       document.getElementById('count').value = data.count || '';
       document.getElementById('price').value = data.price || '';
       document.getElementById('comment').value = data.comment || '';
       document.getElementById('link').value = data.link || '';
-      // Переводим дату из формата 'дд.мм.гггг' в 'YYYY-MM-DD'
-      if (data.desired_date && data.desired_date.includes('.')) {
-        const [day, month, year] = data.desired_date.split('.');
-        document.getElementById('desired_date').value = `${year}-${month}-${day}`;
-      } else {
-        document.getElementById('desired_date').value = data.desired_date || '';
+
+      if (data.desired_date) {
+        let desiredDateValue;
+
+        if (data.desired_date.includes('.')) {
+          const [day, month, year] = data.desired_date.split('.');
+          if (day && month && year) {
+            desiredDateValue = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+        } else {
+          desiredDateValue = data.desired_date;
+        }
+
+        document.getElementById('desired_date').value = desiredDateValue || '';
       }
 
-      M.updateTextFields(); // обновляем стили Materialize
+      M.updateTextFields();
     }
 
     function clearForm() {
@@ -187,28 +199,41 @@
       M.updateTextFields();
     }
 
-    // Удаление
-    document.querySelectorAll('.delete-btn').forEach(button => {
-      button.addEventListener('click', function (event) {
-        event.preventDefault();
-        const requestId = this.dataset.id;
-        if (confirm('Вы уверены, что хотите удалить эту заявку?')) {
-          fetch('/delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ID: requestId })
-          }).then(response => {
-            if (response.ok) window.location.href = '/applications';
-            else alert('Ошибка при удалении заявки.');
-          }).catch(error => {
-            console.error('Ошибка:', error);
-            alert('Произошла ошибка при удалении.');
-          });
-        }
+    // --- Модальное окно отмены заказа ---
+    let orderIdToCancel = null;
+
+    document.querySelectorAll('.cancel-btn').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        orderIdToCancel = this.dataset.id;
+        const instance = M.Modal.getInstance(document.getElementById('cancel-modal'));
+        instance.open();
       });
     });
 
-    // Фильтрация
+    document.getElementById('confirm-cancel-btn').addEventListener('click', async function () {
+      if (!orderIdToCancel) return;
+
+      try {
+        const response = await fetch(`/order/cancel/${orderIdToCancel}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Ошибка при отмене заказа');
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при отмене заказа');
+      }
+
+      orderIdToCancel = null;
+    });
+
+    // --- Фильтрация по статусу и поиску ---
     const searchInput = document.getElementById('search');
     const statusFilter = document.getElementById('status-filter');
     const rows = Array.from(document.querySelectorAll('tbody tr'));
@@ -228,7 +253,6 @@
 
     searchInput.addEventListener('input', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
-    
   });
 </script>
 
