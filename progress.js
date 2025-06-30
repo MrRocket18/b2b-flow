@@ -172,12 +172,15 @@ app.get('/applications', async (req, res) => {
 
 
   try {
+    const today = new Date();
+    const todayDate = today.toISOString().slice(0, 10);
     const requests = await db.GetUserRequests(req.session.uid);
     res.render('applications', {
       session: req.session,
       role: req.session.role,
       title: 'Мои заявки',
-      requests
+      requests: requests,
+      todayDate: todayDate
     });
   } catch (error) {
     console.error("Ошибка при получении заявок:", error);
@@ -190,13 +193,17 @@ app.get('/manager', async (req, res) => {
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications');
   } 
-  try { 
+  try {
+    
+    const today = new Date();
+    const todayDate = today.toISOString().slice(0, 10);
     const requests = await db.GetAllRequest();
     res.render('all_applic', {
       session: req.session,
       role: req.session.role,
       title: 'My requests',
-      requests
+      requests: requests,
+      todayDate: todayDate
     });
   } catch (error) { 
     console.error("Ошибка при получении заявок:", error);

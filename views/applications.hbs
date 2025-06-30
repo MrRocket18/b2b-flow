@@ -17,6 +17,7 @@
           <option value=2>Ждём поставку</option>
           <option value=3>Готово к получению</option>
           <option value=4>Получен</option>
+          <option value=5>Отменено</option>
         </select>
         <label>Фильтр по статусу</label>
       </div>
@@ -66,13 +67,16 @@
                   {{#if (isEqual this.status 2)}} Ждём поставку {{/if}}
                   {{#if (isEqual this.status 3)}} Готово к получению {{/if}}
                   {{#if (isEqual this.status 4)}} Получен {{/if}}
+                  {{#if (isEqual this.status 5)}} Отменено {{/if}}
                 </span>
               </td>
               <td>{{this.comment}}</td>
               <td>
+                {{#if (isEqual this.status 0)}}
                 <a class="btn-flat edit-btn">
                   <i class="material-icons">edit</i>
                 </a>
+                {{/if}}
                 <button class="btn-flat delete-btn" data-id="{{this.ID}}">
                   <i class="material-icons red-text">delete</i>
                 </button>
@@ -107,7 +111,7 @@
         <label for="price">Цена</label>
       </div>
       <div class="input-field">
-        <input name="desired_date" id="desired_date" type="date" required>
+        <input name="desired_date"  id ="desired_date" type="date" min="{{todayDate}}" required>
         <label for="desired_date">Желаемая дата</label>
       </div>
       <div class="input-field">
@@ -125,7 +129,14 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     M.AutoInit();
-
+  // Ограничение на дату из прошлого
+    const deliveryDateInput = document.getElementById('desired_date');
+    if (deliveryDateInput) {
+      const today = new Date();
+      const todayDate = today.toISOString().slice(0, 10);
+      deliveryDateInput.setAttribute('min', todayDate); 
+    }
+  
     const modalInstance = M.Modal.getInstance(document.getElementById('create-modal'));
     const form = document.getElementById('order-form');
 
@@ -146,6 +157,7 @@
         form.action = `/edit/${data.ID}`;
         fillForm(data);
         modalInstance.open();
+                
       });
     });
 
@@ -216,6 +228,7 @@
 
     searchInput.addEventListener('input', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
+    
   });
 </script>
 
