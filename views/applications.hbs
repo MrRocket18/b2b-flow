@@ -215,7 +215,7 @@
       if (!orderIdToCancel) return;
 
       try {
-        const response = await fetch(`/order/cancel/${orderIdToCancel}`, {
+        const response = await fetch(`/order-cancel/${orderIdToCancel}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });

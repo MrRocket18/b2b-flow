@@ -43,10 +43,10 @@
           <td><a href="mailto:{{email}}">{{email}}</a></td>
           <td><a href="tel:{{telphone}}">{{telphone}}</a></td>
           <td>
-            {{#if (eq orders 0)}}
+            {{#if (eq order_count 0)}}
               Нет заказов
             {{else}}
-              {{orders}} {{pluralize orders "заказ" "заказа" "заказов"}}
+              {{order_count}} {{pluralize order_count "заказ" "заказа" "заказов"}}
             {{/if}}
           </td>
           <td><span class="status-badge" {{#if (eq role 1)}}value = 1 {{else}} value= 0 {{/if}}>

@@ -158,11 +158,6 @@ app.post('/', async(req, res) => {
     res.status(500).send('Internal Server Error');
   }
 })
-// app.get('/user', (req, res) => {
-//   res.render('applications', {
-//     title: 'My requests'
-//   });
-// });
 
 app.get('/applications', async (req, res) => {
   if (req.session.role != 0) {
@@ -260,7 +255,7 @@ app.post('/create', async (req, res) => {
   }
 });
 
-app.post('/order/cancel/:id', async (req, res) => {
+app.post('/order-cancel/:id', async (req, res) => {
   const orderId = parseInt(req.params.id);
 
   if (isNaN(orderId)) {
@@ -358,7 +353,7 @@ app.post('/delete-user', async (req, res) => {
     }
 });
 
-app.post('/admin/update/:id', async (req, res) => {
+app.post('/admin-update/:id', async (req, res) => {
     const orderId = parseInt(req.params.id);
     const { delivery_date, status, comment } = req.body;
     if (!orderId || isNaN(orderId)) {
@@ -383,7 +378,7 @@ app.post('/admin/update/:id', async (req, res) => {
     }
 });
 
-app.post('/archive/update/:id', async (req, res) => {
+app.post('/archive-update/:id', async (req, res) => {
     const orderId = parseInt(req.params.id);
     const {status} = req.body;
     if (!orderId || isNaN(orderId)) {
