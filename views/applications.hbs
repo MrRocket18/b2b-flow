@@ -125,14 +125,14 @@
 </div>
 
 <!-- Модальное окно подтверждения отмены -->
-<div id="cancel-modal" class="modal">
+<div id="cancelOrderModal" class="modal">
   <div class="modal-content">
-    <h5>Подтверждение отмены</h5>
+    <h4>Подтверждение отмены</h4>
     <p>Вы уверены, что хотите отменить этот заказ?</p>
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Отмена</a>
-    <a href="#!" id="confirm-cancel-btn" class="waves-effect waves-red btn-flat">Отменить заказ</a>
+    <button class="modal-close waves-effect waves-green btn-flat" id="cancelModalClose">Отмена</button>
+    <button class="modal-close waves-effect waves-red btn-flat" id="confirmCancelButton">Подтвердить</button>
   </div>
 </div>
 
@@ -163,35 +163,60 @@
     });
 
   document.addEventListener('click', async function (e) {
-      const cancelButton = e.target.closest('.btn-flat.cancel-btn');
-      if (cancelButton) {
+    const cancelButton = e.target.closest('.btn-flat.cancel-btn');
+
+    if (cancelButton) {
         const orderId = cancelButton.dataset.id;
 
-        const confirmed = confirm('Вы уверены, что хотите отменить заказ?');
+        // Initialize and open the modal
+        const cancelModal = document.getElementById('cancelOrderModal');
+        const instance = M.Modal.init(cancelModal);
+        instance.open();
+
+        // Create a promise to handle modal confirmation
+        const confirmationPromise = new Promise((resolve) => {
+            const confirmButton = document.getElementById('confirmCancelButton');
+            const cancelButtonClose = document.getElementById('cancelModalClose');
+
+            confirmButton.onclick = () => {
+                resolve(true);
+                instance.close();
+            };
+
+            cancelButtonClose.onclick = () => {
+                resolve(false);
+                instance.close();
+            };
+        });
+
+        // Await modal confirmation
+        const confirmed = await confirmationPromise;
+
         if (!confirmed) return;
 
         try {
-          const response = await fetch(`/order-cancel/${orderId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
+            const response = await fetch(`/order-cancel/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                M.toast({ html: 'Заказ успешно отменен!', classes: 'green rounded' });
+                e.target.closest('tr').remove();
+            } else {
+                alert('Ошибка: ' + (result.error || 'Не удалось отменить заказ'));
             }
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            M.toast({ html: 'Заказ успешно отменён', classes: '#26a69a teal lighten-1 rounded' });
-            e.target.closest('tr').remove();
-          } else {
-            alert('Ошибка: ' + (result.error || 'Не удалось отменить заказ'));
-          }
         } catch (err) {
-          console.error('AJAX ошибка:', err);
-          alert('Серверная ошибка');
+            console.error('AJAX ошибка:', err);
+            alert('Серверная ошибка');
         }
-      }
-  });
+    }
+});
 
     function fillForm(data) {
       document.getElementById('item_name').value = data.item_name || '';
