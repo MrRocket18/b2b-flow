@@ -69,15 +69,13 @@ export async function createRequest(orderData) {
 
     try {
         const { user_id, item_name, count, price, link, desired_date, comment } = orderData;
-        console.log(user_id, item_name, count, price, link, desired_date, comment)
-        const formattedDate = formatDate(desired_date);
+        // const formattedDate = formatDate(desired_date);
         const parsedCount = parseInt(count, 10);
         const parsedPrice = parseFloat(price);
-        const status = 'На рассмотрении';
 
         const [result] = await pool.query(
-            'INSERT INTO Request (user_id, item_name, count, price, link, desired_date, status, comment) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [user_id, item_name, parsedCount, parsedPrice, link, formattedDate, status, comment || '']
+            'INSERT INTO Request (user_id, item_name, count, price, link, desired_date, comment) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [user_id, item_name, parsedCount, parsedPrice, link, desired_date, comment || '']
         );
 
         return { success: true, insertId: result.insertId };
@@ -148,19 +146,6 @@ export async function updateRequestById(id, updatedData) {
         return result.affectedRows > 0;
     } catch (error) {
         console.error('Ошибка при обновлении заявки:', error);
-        throw error;
-    }
-}
-
-export async function deleteRequestById(id) {
-    try {
-        const [result] = await pool.execute(
-            'DELETE FROM Request WHERE id = ?', [id]
-        );
-
-        return result.affectedRows > 0;
-    } catch (error) {
-        console.error('Ошибка при удалении заявки из БД:', error);
         throw error;
     }
 }
@@ -302,4 +287,22 @@ export async function updateStatusById(id, {status}) {
     } catch (err) {
         throw err;
     }
+}
+
+export async function GetAllStatuses() {
+  try {
+    const [rows] = await pool.query(
+      `SELECT
+    COUNT(IF(status = 0, 1, NULL)) AS new,
+    COUNT(IF(status BETWEEN 1 AND 3, 1, NULL)) AS processing,
+    COUNT(IF(status = 4, 1, NULL)) AS completed,
+    COUNT(IF(status = 5, 1, NULL)) AS cancelled,
+    COUNT(*) AS total
+    FROM Request`
+    );
+    return rows;
+  } catch (error) {
+    console.error('Ошибка при получении данных о товаре по ID:', error);
+    throw error; 
+  }
 }
