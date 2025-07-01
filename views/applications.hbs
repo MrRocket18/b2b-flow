@@ -162,61 +162,84 @@
       });
     });
 
-  document.addEventListener('click', async function (e) {
-    const cancelButton = e.target.closest('.btn-flat.cancel-btn');
+      document.addEventListener('click', async function (e) {
+      const cancelButton = e.target.closest('.btn-flat.cancel-btn');
 
-    if (cancelButton) {
+      if (cancelButton) {
         const orderId = cancelButton.dataset.id;
 
-        // Initialize and open the modal
-        const cancelModal = document.getElementById('cancelOrderModal');
-        const instance = M.Modal.init(cancelModal);
-        instance.open();
+      
+        const cancelOrderModal = document.getElementById('cancelOrderModal');
+        const modalInstance = M.Modal.init(cancelOrderModal);
+        modalInstance.open();
 
-        // Create a promise to handle modal confirmation
+        
         const confirmationPromise = new Promise((resolve) => {
-            const confirmButton = document.getElementById('confirmCancelButton');
-            const cancelButtonClose = document.getElementById('cancelModalClose');
+          
+          const confirmButton = document.getElementById('confirmCancelButton');
+          const cancelButtonClose = document.getElementById('cancelModalClose');
+          
+          confirmButton.onclick = () => {
+            resolve(true); 
+            modalInstance.close(); 
+          };
 
-            confirmButton.onclick = () => {
-                resolve(true);
-                instance.close();
-            };
-
-            cancelButtonClose.onclick = () => {
-                resolve(false);
-                instance.close();
-            };
+          cancelButtonClose.onclick = () => {
+            resolve(false); 
+            modalInstance.close(); 
+          };
         });
 
-        // Await modal confirmation
         const confirmed = await confirmationPromise;
-
-        if (!confirmed) return;
-
-        try {
+        
+        if (confirmed) {
+          try {
             const response = await fetch(`/order-cancel/${orderId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({})
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({})
             });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
             const result = await response.json();
 
             if (result.success) {
+              const row = cancelButton.closest('tr');
+              if (row) {
+              
+                const statusSpan = row.querySelector('td:nth-child(6) > span');
+                if (statusSpan) {
+                  statusSpan.textContent = 'Отменено'; 
+                  statusSpan.setAttribute('value', 5); 
+                }
+
+                const buttonCell = row.querySelector('td:last-child'); 
+                if (buttonCell) {
+                  buttonCell.innerHTML = '';
+                }
+
                 M.toast({ html: 'Заказ успешно отменен!', classes: 'green rounded' });
-                e.target.closest('tr').remove();
+              } else {
+                console.error('Не удалось найти строку таблицы для обновления.');
+                M.toast({ html: 'Не удалось отменить заказ!', classes: 'red rounded' });
+              }
             } else {
-                alert('Ошибка: ' + (result.error || 'Не удалось отменить заказ'));
+              alert('Ошибка: ' + (result.error || 'Не удалось отменить заказ'));
             }
-        } catch (err) {
+          } catch (err) {
             console.error('AJAX ошибка:', err);
             alert('Серверная ошибка');
+          }
+        } else {
+          M.toast({ html: 'Действие отменено.', classes: 'yellow rounded' });
         }
-    }
-});
+      }
+    });
 
     function fillForm(data) {
       document.getElementById('item_name').value = data.item_name || '';

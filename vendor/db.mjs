@@ -266,7 +266,7 @@ export async function updateOrderById(id, { delivery_date, status, comment }) {
     }
 }
 
-export async function updateStatusById(id, {status}) {
+export async function updateStatusById(id, { status }) {
     const updateQuery = `
         UPDATE Request SET 
           status = ?

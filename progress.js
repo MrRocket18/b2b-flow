@@ -32,7 +32,7 @@ const hbs = exphbs.create({
   extname: 'hbs',
   helpers: {
     ...allHelpers,
-    isEqual: (a, b) => a === b,
+    isEqual: (a, b) => a == b,
     lookupStatusLabel: (status) => {
       switch (status) {
         case 'active': return 'Активен';
@@ -43,12 +43,27 @@ const hbs = exphbs.create({
     },
     pluralize: (n, one, few, many) => {
       const mod10 = n % 10, mod100 = n % 100;
-      if (mod10 === 1 && mod100 !== 11) return one;
+      if (mod10 == 1 && mod100 !== 11) return one;
       if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
       return many;
     },
     json: function(context) {
       return JSON.stringify(context);
+    },
+    formatDate: function(dateString, format = 'DD.MM.YYYY') {
+      if (!dateString) return '—';
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0'); 
+      const year = date.getFullYear();
+
+      if (format == 'DD.MM.YYYY') {
+        return `${day}.${month}.${year}`;
+      } else if (format === 'YYYY-MM-DD') {
+        return `${year}-${month}-${day}`;
+      } else {
+        return date.toLocaleDateString();
+      }
     }
   }
 });
@@ -336,69 +351,78 @@ app.post('/delete-user', async (req, res) => {
     const id = req.body.id;
 
     if (!id || isNaN(Number(id))) {
-        return res.status(400).send('Неверный ID');
+        return res.status(400).json({ success: false, error: 'Неверный ID' });
     }
 
     try {
         const success = await db.deleteUsers(Number(id));
 
         if (success) {
-            return res.redirect('/base'); 
+            return res.json({ success: true, message: 'Пользователь удален' });
         } else {
-            return res.status(404).send('Пользователь не найден');
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
         }
     } catch (error) {
         console.error('Ошибка при удалении пользователя:', error);
-        return res.status(500).send('Ошибка сервера');
+        return res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
 
 app.post('/admin-update/:id', async (req, res) => {
     const orderId = parseInt(req.params.id);
     const { delivery_date, status, comment } = req.body;
+
     if (!orderId || isNaN(orderId)) {
-        return res.status(400).send('Неверный ID');
+        return res.status(400).json({ success: false, message: 'Неверный ID' });
     }
-     console.log(delivery_date)
+
     try {
-        const success = await db.updateOrderById(orderId, {
+        const updatedOrder = await db.updateOrderById(orderId, {
             delivery_date,
             status: parseInt(status),
             comment
         });
-  
-        if (success) {
-            return res.redirect('/manager'); // или '/applications'
+
+        if (updatedOrder) {
+            return res.json({ success: true, message: 'Данные заказа обновлены' });
         } else {
-            return res.status(404).send('Заказ не найден');
+            return res.status(404).json({ success: false, message: 'Заказ не найден' });
         }
     } catch (error) {
-        console.error('Ошибка при обновлении заказа:', error);
-        return res.status(500).send('Ошибка сервера');
+        console.error('Ошибка:', error);
+        return res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });
 
 app.post('/archive-update/:id', async (req, res) => {
     const orderId = parseInt(req.params.id);
-    const {status} = req.body;
+    const { status } = req.body;
+
+    // Проверка ID
     if (!orderId || isNaN(orderId)) {
-        return res.status(400).send('Неверный ID');
+        return res.status(400).json({ success: false, error: 'Неверный ID' });
+    }
+
+    // Проверка статуса
+    const parsedStatus = parseInt(status);
+    if (isNaN(parsedStatus)) {
+        return res.status(400).json({ success: false, error: 'Неверный статус' });
     }
 
     try {
         // Вызываем метод из db.mjs
-        const success = await db.updateStatusById(orderId, {
-            status: parseInt(status)
+        const updatedOrder = await db.updateStatusById(orderId, {
+            status: parsedStatus
         });
 
-        if (success) {
-            return res.redirect('/arch'); 
+        if (updatedOrder) {
+            return res.json({ success: true, message: 'Статус успешно изменён' });
         } else {
-            return res.status(404).send('Заказ не найден');
+            return res.status(404).json({ success: false, error: 'Заказ не найден' });
         }
     } catch (error) {
         console.error('Ошибка при обновлении заказа:', error);
-        return res.status(500).send('Ошибка сервера');
+        return res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
 
