@@ -75,12 +75,8 @@
               <td>{{this.comment}}</td>
               <td>
                 {{#if (eq this.status 0)}}
-                  <a class="btn-flat edit-btn">
-                    <i class="material-icons">edit</i>
-                  </a>
-                  <a class="btn-flat cancel-btn" data-id="{{this.ID}}">
-                    <i class="material-icons red-text">cancel</i>
-                  </a>
+                  <button class="btn-flat edit-btn" data-id="{{ID}}"><i class="material-icons">edit</i></button>
+                  <button class="btn-flat cancel-btn" data-id="{{ID}}"><i class="material-icons">cancel</i></button>
                 {{/if}}
               </td>
             </tr>
@@ -166,6 +162,37 @@
       });
     });
 
+  document.addEventListener('click', async function (e) {
+      const cancelButton = e.target.closest('.btn-flat.cancel-btn');
+      if (cancelButton) {
+        const orderId = cancelButton.dataset.id;
+
+        const confirmed = confirm('Вы уверены, что хотите отменить заказ?');
+        if (!confirmed) return;
+
+        try {
+          const response = await fetch(`/order-cancel/${orderId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            M.toast({ html: 'Заказ успешно отменён', classes: '#26a69a teal lighten-1 rounded' });
+            e.target.closest('tr').remove();
+          } else {
+            alert('Ошибка: ' + (result.error || 'Не удалось отменить заказ'));
+          }
+        } catch (err) {
+          console.error('AJAX ошибка:', err);
+          alert('Серверная ошибка');
+        }
+      }
+  });
+
     function fillForm(data) {
       document.getElementById('item_name').value = data.item_name || '';
       document.getElementById('count').value = data.count || '';
@@ -202,36 +229,6 @@
     // --- Модальное окно отмены заказа ---
     let orderIdToCancel = null;
 
-    document.querySelectorAll('.cancel-btn').forEach(btn => {
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        orderIdToCancel = this.dataset.id;
-        const instance = M.Modal.getInstance(document.getElementById('cancel-modal'));
-        instance.open();
-      });
-    });
-
-    document.getElementById('confirm-cancel-btn').addEventListener('click', async function () {
-      if (!orderIdToCancel) return;
-
-      try {
-        const response = await fetch(`/order-cancel/${orderIdToCancel}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (response.ok) {
-          window.location.reload();
-        } else {
-          alert('Ошибка при отмене заказа');
-        }
-      } catch (error) {
-        console.error('Ошибка:', error);
-        alert('Произошла ошибка при отмене заказа');
-      }
-
-      orderIdToCancel = null;
-    });
 
     // --- Фильтрация по статусу и поиску ---
     const searchInput = document.getElementById('search');
