@@ -1,5 +1,4 @@
 {{!-- views/all_applic.hbs --}}
-
 <div class="orders-page-container">
   <h1 class="orders-page-title">Все заказы</h1>
 
@@ -23,7 +22,7 @@
             <td>{{this.completed}}</td>
             <td>{{this.cancelled}}</td>
             <td>{{this.total}}</td>
-            {{/each}}
+          {{/each}}
         </tr>
       </tbody>
     </table>
@@ -37,190 +36,277 @@
     <div class="input-field col s6 m6">
       <select id="status-filter">
         <option value="">Все статусы</option>
-        <option value= 0>На рассмотрении</option>
-        <option value= 1>Закупаем</option>
-        <option value= 2>Ждём поставку</option>
-        <option value= 3>Готово к получению</option>
-        <option value= 4>Получен</option>
-        <option value= 5>Отменено</option>
+        <option value=0>На рассмотрении</option>
+        <option value=1>Закупаем</option>
+        <option value=2>Ждём поставку</option>
+        <option value=3>Готово к получению</option>
+        <option value=4>Получен</option>
+        <option value=5>Отменено</option>
       </select>
       <label>Фильтр по статусу</label>
     </div>
   </div>
 
   <!-- Основная таблица -->
-  <!-- Основная таблица -->
-<div class="card-panel white lighten-1 orders-container">
-  <table class="striped highlight responsive-table" id="orders-table">
-    <thead>
-      <tr>
-        <th class="sortable" data-sort="item_name">Название</th>
-        <th class="sortable" data-sort="count">Кол-во</th>
-        <th class="sortable" data-sort="price">Цена</th>
-        <th class="sortable" data-sort="desired_date">Желаемая дата</th>
-        <th class="sortable">Предполагаемая дата</th>
-        <th>Пользователь</th>
-        <th class="sortable" data-sort="status">Статус</th>
-        <th>Комментарий</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="orders-body">
-      {{#each requests}}
-        {{#if (isEqual this.status 4)}}
-        {{else}}
+  <div class="card-panel white lighten-1 orders-container">
+    <table class="striped highlight responsive-table" id="orders-table">
+      <thead>
         <tr>
-          <form method="POST" action="/admin-update/{{this.ID}}">
-            <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
-            <td>{{this.count}}</td>
-            <td>{{this.price}}</td>
-            <td>{{this.desired_date}}</td>
-            <td>
-              <input type="date" id="delivery_date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}">
-              {{this.delivery_date}}
-            </td>
-            <td>{{this.user_fullname}}</td>
-            <td>
-              <select id = "status" name="status" class="browser-default">
-                <option value= 0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
-                <option value= 1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
-                <option value= 2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
-                <option value= 3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
-                <option value= 4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
-                <option value= 5 {{#if (isEqual this.status 5)}}selected{{/if}}>Отменено</option>
-              </select>
-            </td>
-            <td>
-              <input type="text" name="comment" value="{{this.comment}}">
-            </td>
-            <td>
-              <button type="submit" class="btn-flat tooltipped" data-tooltip="Сохранить изменения">
-                <i class="material-icons green-text">check</i>
-              </button>
-            </td>
-          </form>
+          <th class="sortable" data-sort="item_name">Название</th>
+          <th class="sortable" data-sort="count">Кол-во</th>
+          <th class="sortable" data-sort="price">Цена</th>
+          <th class="sortable" data-sort="desired_date">Желаемая дата</th>
+          <th class="sortable">Предполагаемая дата</th>
+          <th>Пользователь</th>
+          <th class="sortable" data-sort="status">Статус</th>
+          <th>Комментарий</th>
+          <th></th>
         </tr>
-        {{/if}}
-      {{/each}}
-    </tbody>
-  </table>
-</div>
+      </thead>
+      <tbody id="orders-body">
+        {{#each requests}}
+          {{#if (isEqual this.status 4)}}
+          {{else}}
+          <tr>
+            <form class="order-form" data-id="{{this.ID}}">
+              <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
+              <td data-field="count">{{this.count}}</td>
+              <td data-field="price">{{this.price}}</td>
+              <td data-field="desired_date">{{this.desired_date}}</td>
+              <td data-field="delivery_date">
+                <input type="date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}">
+                <span class="formatted-date">
+                  {{#if this.delivery_date}}
+                    {{this.delivery_date }}
+                  {{else}}
+                    —
+                  {{/if}}
+                </span>
+              </td>
+              <td data-field="user_fullname">{{this.user_fullname}}</td>
+              <td data-field="status">
+                <select name="status" class="browser-default">
+                  <option value=0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
+                  <option value=1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
+                  <option value=2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
+                  <option value=3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
+                  <option value=4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
+                  <option value=5 {{#if (isEqual this.status 5)}}selected{{/if}}>Отменено</option>
+                </select>
+              </td>
+              <td data-field="comment">
+                <input type="text" name="comment" value="{{this.comment}}">
+              </td>
+              <td>
+                <button type="button" class="btn-flat tooltipped save-order-btn" data-tooltip="Сохранить изменения">
+                  <i class="material-icons green-text">check</i>
+                </button>
+              </td>
+            </form>
+          </tr>
+          {{/if}}
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
 
-
-<!-- MODAL -->
-<div id="status-modal" class="modal">
-  <form method="POST" id="status-form">
-    <div class="modal-content">
-      <h5>Изменить статус заявки</h5>
-      <div class="input-field">
-        <select name="new_status" id="new-status-select" required>
-          <option value="" disabled selected>Выберите статус</option>
-          <option value="На рассмотрении">На рассмотрении</option>
-          <option value="Закупаем">Закупаем</option>
-          <option value="Ждём поставку">Ждём поставку</option>
-          <option value="Готово к получению">Готово к получению</option>
-          <option value="Получен">Получен</option>
-        </select>
-        <label>Новый статус</label>
+  <!-- MODAL -->
+  <div id="status-modal" class="modal">
+    <form method="POST" id="status-form">
+      <div class="modal-content">
+        <h5>Изменить статус заявки</h5>
+        <div class="input-field">
+          <select name="new_status" id="new-status-select" required>
+            <option value="" disabled selected>Выберите статус</option>
+            <option value="На рассмотрении">На рассмотрении</option>
+            <option value="Закупаем">Закупаем</option>
+            <option value="Ждём поставку">Ждём поставку</option>
+            <option value="Готово к получению">Готово к получению</option>
+            <option value="Получен">Получен</option>
+          </select>
+          <label>Новый статус</label>
+        </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button type="submit" class="modal-close btn green">Сохранить</button>
-      <a class="modal-close btn-flat">Отмена</a>
-    </div>
-  </form>
-</div>
+      <div class="modal-footer">
+        <button type="submit" class="modal-close btn green">Сохранить</button>
+        <a class="modal-close btn-flat">Отмена</a>
+      </div>
+    </form>
+  </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Ограничение на дату из прошлого
-  
-    const deliveryDateInput = document.getElementById('delivery_date');
-    if (deliveryDateInput) {
-      const today = new Date();
-      const todayDate = today.toISOString().slice(0, 10);
-      deliveryDateInput.setAttribute('min', todayDate);
-    }
- 
-    const elems = document.querySelectorAll('.modal');
-    M.Modal.init(elems);
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // --- Инициализация Materialize ---
+      const modalEl = document.querySelector('#status-modal');
+      const modal = M.Modal.init(modalEl);
+      const selects = document.querySelectorAll('select');
+      M.FormSelect.init(selects);
 
-    const selects = document.querySelectorAll('select');
-    M.FormSelect.init(selects);
+      // --- Ограничение на минимальную дату ---
+      const deliveryDateInputs = document.querySelectorAll('[name="delivery_date"]');
+      deliveryDateInputs.forEach(input => {
+        const today = new Date();
+        const todayDate = today.toISOString().slice(0, 10);
+        input.setAttribute('min', todayDate);
+      });
 
-    const modal = M.Modal.getInstance(document.getElementById('status-modal'));
-    const form = document.getElementById('status-form');
-
-    document.querySelectorAll('.change-status-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        const currentStatus = btn.dataset.status;
-        form.action = `/update-status/${id}`;
-        const select = document.getElementById('new-status-select');
-        [...select.options].forEach(opt => {
-          opt.selected = (opt.value === currentStatus);
+      // --- Модальное окно изменения статуса ---
+      const form = document.getElementById('status-form');
+      document.querySelectorAll('.change-status-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const currentStatus = btn.dataset.status;
+          form.action = `/update-status/${id}`;
+          const select = document.getElementById('new-status-select');
+          [...select.options].forEach(opt => {
+            opt.selected = (opt.value === currentStatus);
+          });
+          M.FormSelect.init(select);
+          modal.open();
         });
-        M.FormSelect.init(select);
-        modal.open();
       });
-    });
 
-    const searchInput = document.getElementById('search-input');
-    const statusFilter = document.getElementById('status-filter');
-    
-    const rows = Array.from(document.querySelectorAll('#orders-body tr'));
-    let sortField = null;
-    let sortAsc = true;
+      // --- Фильтрация и сортировка ---
+      const searchInput = document.getElementById('search-input');
+      const statusFilter = document.getElementById('status-filter');
+      let rows = Array.from(document.querySelectorAll('#orders-body tr'));
+      let sortField = null;
+      let sortAsc = true;
 
-    function applyFilters() {
-      const term = searchInput?.value.toLowerCase() || '';
-      const selectedStatus = statusFilter?.value || '';
+      function applyFilters() {
+        const term = searchInput?.value.toLowerCase() || '';
+        const selectedStatus = statusFilter?.value || '';
 
-      rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        const matchesSearch = term === '' || text.includes(term);
-        const matchesStatus = selectedStatus === '' || row.cells[6]?.querySelector('select').value === selectedStatus;
-        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        rows.forEach(row => {
+          const text = row.innerText.toLowerCase();
+          const cell = row.cells[6]?.querySelector('select');
+          const matchesSearch = !term || text.includes(term);
+          const matchesStatus = !selectedStatus || (cell && cell.value === selectedStatus);
+          row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        });
+      }
+
+      function sortTable(field) {
+        const indexMap = {
+          item_name: 0,
+          count: 1,
+          price: 2,
+          desired_date: 3,
+          status: 6
+        };
+        const colIndex = indexMap[field];
+        const sortedRows = [...rows].sort((a, b) => {
+          const aText = (a.cells[colIndex]?.innerText || '').trim();
+          const bText = (b.cells[colIndex]?.innerText || '').trim();
+          const aNum = parseFloat(aText.replace(',', '.'));
+          const bNum = parseFloat(bText.replace(',', '.'));
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            return sortAsc ? aNum - bNum : bNum - aNum;
+          }
+          return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+        });
+
+        const tbody = document.getElementById('orders-body');
+        tbody.innerHTML = '';
+        sortedRows.forEach(row => tbody.appendChild(row));
+      }
+
+      document.querySelectorAll('.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          sortAsc = sortField === field ? !sortAsc : true;
+          sortField = field;
+          sortTable(field);
+        });
       });
-    }
 
-    function sortTable(field) {
-      const indexMap = {
-        item_name: 0,
-        count: 1,
-        price: 2,
-        desired_date: 3,
-        status: 5
-      };
-      const colIndex = indexMap[field];
-      const sortedRows = [...rows].sort((a, b) => {
-        const aText = a.cells[colIndex].innerText.trim();
-        const bText = b.cells[colIndex].innerText.trim();
-        const aNum = parseFloat(aText.replace(',', '.'));
-        const bNum = parseFloat(bText.replace(',', '.'));
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          return sortAsc ? aNum - bNum : bNum - aNum;
+      if (searchInput) searchInput.addEventListener('input', applyFilters);
+      if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+
+      // --- Сохранение изменений заказа ---
+      document.addEventListener('click', async function (e) {
+        const button = e.target.closest('.save-order-btn');
+        if (!button) return;
+
+        const row = button.closest('tr');
+        const form = row.querySelector('form.order-form');
+        const orderId = form.dataset.id;
+
+        const deliveryDateInput = row.querySelector('[name="delivery_date"]');
+        const statusSelect = row.querySelector('[name="status"]');
+        const commentInput = row.querySelector('[name="comment"]');
+
+        const data = {
+          delivery_date: deliveryDateInput.value,
+          status: parseInt(statusSelect.value),
+          comment: commentInput.value
+        };
+
+        try {
+          const response = await fetch(`/admin-update/${orderId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            M.toast({ html: 'Изменения успешно сохранены', classes: 'green darken-1 rounded' });
+
+            // --- Форматируем дату как ДД.ММ.ГГ ---
+            const formattedDeliveryDate = data.delivery_date ? formatDate(data.delivery_date, 'DD.MM.YYYY') : '—';
+
+            // --- Обновляем значения в таблице ---
+            row.querySelector('[data-field="delivery_date"] input').value = data.delivery_date || '';
+            row.querySelector('[data-field="delivery_date"] .formatted-date').textContent = formattedDeliveryDate;
+            row.querySelector('[data-field="status"] select').value = data.status;
+            row.querySelector('[data-field="status"] select').dispatchEvent(new Event('change')); // Обновляем Materialize Select
+            row.querySelector('[data-field="comment"] input').value = data.comment || '';
+
+            // --- ОБНОВЛЯЕМ СПИСОК ROWS ДЛЯ ФИЛЬТРАЦИИ ---
+            rows = Array.from(document.querySelectorAll('#orders-body tr'));
+
+            // --- ПОВТОРНО ПРИМЕНЯЕМ ФИЛЬТР ---
+            applyFilters();
+
+          } else {
+            M.toast({ html: result.message || 'Ошибка при сохранении', classes: 'red darken-1 rounded' });
+          }
+
+        } catch (error) {
+          console.error('Ошибка:', error);
+          M.toast({ html: 'Ошибка сети при сохранении', classes: 'red darken-1 rounded' });
         }
-        return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
       });
 
-      const tbody = document.getElementById('orders-body');
-      tbody.innerHTML = '';
-      sortedRows.forEach(row => tbody.appendChild(row));
-    }
+      // --- Вспомогательная функция для форматирования даты ---
+      function formatDate(dateString, format) {
+        if (!dateString) return '—';
+        const date = new Date(dateString);
+        let day = date.getDate();
+        let month = date.getMonth() + 1;
+        const year = date.getFullYear();
 
-    document.querySelectorAll('.sortable').forEach(th => {
-      th.addEventListener('click', () => {
-        const field = th.getAttribute('data-sort');
-        sortAsc = sortField === field ? !sortAsc : true;
-        sortField = field;
-        sortTable(field);
-      });
+        day = String(day).padStart(2, '0');
+        month = String(month).padStart(2, '0');
+
+        return `${day}.${month}.${year}`;
+      }
+
+      // --- Вспомогательная функция для отображения статуса ---
+      function getStatusLabel(status) {
+        const labels = {
+          0: 'На рассмотрении',
+          1: 'Закупаем',
+          2: 'Ждём поставку',
+          3: 'Готово к получению',
+          4: 'Получен',
+          5: 'Отменено'
+        };
+        return labels[status] || 'Неизвестный статус';
+      }
     });
-
-    if (searchInput) searchInput.addEventListener('input', applyFilters);
-    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
-    
-  });
-  
-</script>
+  </script>
