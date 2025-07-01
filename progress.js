@@ -257,23 +257,23 @@ app.post('/create', async (req, res) => {
 
 app.post('/order-cancel/:id', async (req, res) => {
   const orderId = parseInt(req.params.id);
-
   if (isNaN(orderId)) {
-    return res.status(400).send('Неверный ID');
+    return res.status(400).json({ error: 'Неверный ID' });
   }
 
   try {
-    const success = await db.updateStatusById(orderId, { status: 5 }); // 5 — Отменено
+    const success = await db.updateStatusById(orderId, { status: 5 });
     if (success) {
-      return res.send({ ok: true });
+      return res.json({ success: true, message: 'Заказ отменён' });
     } else {
-      return res.status(404).send('Заказ не найден');
+      return res.status(404).json({ error: 'Заказ не найден' });
     }
   } catch (err) {
     console.error('Ошибка при отмене заказа:', err);
-    return res.status(500).send('Ошибка сервера');
+    return res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
+
 
 app.get('/edit', async (req, res) => {
   if(req.session.role != 0)
