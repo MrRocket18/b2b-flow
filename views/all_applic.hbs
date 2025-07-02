@@ -31,7 +31,7 @@
   <!-- Фильтры -->
   <div class="row filter-bar">
     <div class="input-field col s6 m6">
-      <input type="text" id="search-input" placeholder="Поиск по ID, названию, пользователю, дате">
+      <input type="text" id="search-input" placeholder="Поиск названию, пользователю, дате">
     </div>
     <div class="input-field col s6 m6">
       <select id="status-filter">
@@ -56,9 +56,9 @@
           <th class="sortable" data-sort="count">Кол-во</th>
           <th class="sortable" data-sort="price">Цена</th>
           <th class="sortable" data-sort="desired_date">Желаемая дата</th>
-          <th class="sortable">Предполагаемая дата</th>
+          <th class="sortable" data-sort="delivery_date">Предполагаемая дата</th>
           <th>Пользователь</th>
-          <th class="sortable" data-sort="status">Статус</th>
+          <th data-sort="status">Статус</th>
           <th>Комментарий</th>
           <th></th>
         </tr>
@@ -95,7 +95,7 @@
                 </select>
               </td>
               <td data-field="comment">
-                <input type="text" name="comment" value="{{this.comment}}">
+                <input type="text" name="comment" maxlength="500" value="{{this.comment}}">
               </td>
               <td>
                 <button type="button" class="btn-flat tooltipped save-order-btn" data-tooltip="Сохранить изменения">
@@ -192,7 +192,7 @@
           count: 1,
           price: 2,
           desired_date: 3,
-          status: 6
+          delivery_date: 4
         };
         const colIndex = indexMap[field];
         const sortedRows = [...rows].sort((a, b) => {
