@@ -2,7 +2,21 @@
 
 <div class="orders-page-container">
   <h1 class="orders-page-title">Все заказы</h1>
-
+  <!-- Фильтры -->
+  <div class="row filter-bar">
+    
+    <div class="input-field col s6 m6">
+      <select id="summary-status-filter">
+        <option value="">Все статусы</option>
+        <option value="На рассмотрении">На рассмотрении</option>
+        <option value="Закупаем">Закупаем</option>
+        <option value="Ждём поставку">Ждём поставку</option>
+        <option value="Готово к получению">Готово к получению</option>
+        <option value="Получен">Получен</option>
+      </select>
+      <label>Фильтр по статусу</label>
+    </div>
+  </div>
   <!-- Сводная таблица -->
   <div class="card-panel white lighten-1 summary-container">
     <table class="striped centered highlight summary-table">
@@ -35,15 +49,26 @@
     <div class="input-field col s6 m6">
       <select id="status-filter">
         <option value="">Все статусы</option>
-        <option value= 0>На рассмотрении</option>
-        <option value= 1>Закупаем</option>
-        <option value= 2>Ждём поставку</option>
-        <option value= 3>Готово к получению</option>
-        <option value= 4>Получен</option>
+        <option value="На рассмотрении">На рассмотрении</option>
+        <option value="Закупаем">Закупаем</option>
+        <option value="Ждём поставку">Ждём поставку</option>
+        <option value="Готово к получению">Готово к получению</option>
+        <option value="Получен">Получен</option>
       </select>
       <label>Фильтр по статусу</label>
     </div>
   </div>
+
+<!-- Фильтр по дате -->
+<div class="row filter-bar">
+  <div class="col s12">
+    <div class="filter-section">
+      <div class="filter-item active" data-range="all"><span>Все заказы</span></div>
+      <div class="filter-item" data-range="month"><span>За последний месяц</span></div>
+      <div class="filter-item" data-range="year"><span>За последний год</span></div>
+    </div>
+  </div>
+</div>
 
   <!-- Основная таблица -->
   <!-- Основная таблица -->
@@ -71,17 +96,16 @@
           <td>{{this.price}}</td>
           <td>{{this.desired_date}}</td>
           <td>
-            <input type="date" id="delivery_date" name="delivery_date" value="{{this.delivery_date}}" {{this.delivery_date}}>
-            {{this.delivery_date}}
+            <input type="date" name="expected_date" value="{{this.expected_date}}">
           </td>
-          <td>{{this.user_fullname}}</td>
+          <td>{{this.user_id}}</td>
           <td>
-            <select id = "status" name="status" class="browser-default">
-              <option value= 0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
-              <option value= 1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
-              <option value= 2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
-              <option value= 3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
-              <option value= 4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
+            <select name="status" class="browser-default">
+              <option value="На рассмотрении" {{#if (isEqual this.status "На рассмотрении")}}selected{{/if}}>На рассмотрении</option>
+              <option value="Закупаем" {{#if (isEqual this.status "Закупаем")}}selected{{/if}}>Закупаем</option>
+              <option value="Ждём поставку" {{#if (isEqual this.status "Ждём поставку")}}selected{{/if}}>Ждём поставку</option>
+              <option value="Готово к получению" {{#if (isEqual this.status "Готово к получению")}}selected{{/if}}>Готово к получению</option>
+              <option value="Получен" {{#if (isEqual this.status "Получен")}}selected{{/if}}>Получен</option>
             </select>
           </td>
           <td>
@@ -126,83 +150,104 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const elems = document.querySelectorAll('.modal');
-    M.Modal.init(elems);
+  const modals = document.querySelectorAll('.modal');
+  M.Modal.init(modals);
 
-    const selects = document.querySelectorAll('select');
-    M.FormSelect.init(selects);
+  const selects = document.querySelectorAll('select');
+  M.FormSelect.init(selects);
 
-    const modal = M.Modal.getInstance(document.getElementById('status-modal'));
-    const form = document.getElementById('status-form');
+  // МОДАЛЬНОЕ ОКНО ДЛЯ СТАТУСА
+  const modal = M.Modal.getInstance(document.getElementById('status-modal'));
+  const form = document.getElementById('status-form');
 
-    document.querySelectorAll('.change-status-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        const currentStatus = btn.dataset.status;
-        form.action = `/update-status/${id}`;
-        const select = document.getElementById('new-status-select');
-        [...select.options].forEach(opt => {
-          opt.selected = (opt.value === currentStatus);
-        });
-        M.FormSelect.init(select);
-        modal.open();
+  document.querySelectorAll('.change-status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const currentStatus = btn.dataset.status;
+      form.action = `/update-status/${id}`;
+      const select = document.getElementById('new-status-select');
+      [...select.options].forEach(opt => {
+        opt.selected = (opt.value === currentStatus);
       });
+      M.FormSelect.init(select);
+      modal.open();
     });
-
-    const searchInput = document.getElementById('search-input');
-    const statusFilter = document.getElementById('status-filter');
-    
-    const rows = Array.from(document.querySelectorAll('#orders-body tr'));
-    let sortField = null;
-    let sortAsc = true;
-
-    function applyFilters() {
-      const term = searchInput?.value.toLowerCase() || '';
-      const selectedStatus = statusFilter?.value || '';
-
-      rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        const matchesSearch = term === '' || text.includes(term);
-        const matchesStatus = selectedStatus === '' || row.cells[6]?.querySelector('select').value === selectedStatus;
-        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
-      });
-    }
-
-    function sortTable(field) {
-      const indexMap = {
-        item_name: 0,
-        count: 1,
-        price: 2,
-        desired_date: 3,
-        status: 5
-      };
-      const colIndex = indexMap[field];
-      const sortedRows = [...rows].sort((a, b) => {
-        const aText = a.cells[colIndex].innerText.trim();
-        const bText = b.cells[colIndex].innerText.trim();
-        const aNum = parseFloat(aText.replace(',', '.'));
-        const bNum = parseFloat(bText.replace(',', '.'));
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          return sortAsc ? aNum - bNum : bNum - aNum;
-        }
-        return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
-      });
-
-      const tbody = document.getElementById('orders-body');
-      tbody.innerHTML = '';
-      sortedRows.forEach(row => tbody.appendChild(row));
-    }
-
-    document.querySelectorAll('.sortable').forEach(th => {
-      th.addEventListener('click', () => {
-        const field = th.getAttribute('data-sort');
-        sortAsc = sortField === field ? !sortAsc : true;
-        sortField = field;
-        sortTable(field);
-      });
-    });
-
-    if (searchInput) searchInput.addEventListener('input', applyFilters);
-    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
   });
+
+  // === Таблица orders ===
+  const ordersSearchInput = document.getElementById('search-input');
+  const ordersStatusFilter = document.getElementById('orders-status-filter');
+  const orderRows = Array.from(document.querySelectorAll('#orders-body tr'));
+  let sortField = null;
+  let sortAsc = true;
+
+  function applyOrderFilters() {
+    const term = ordersSearchInput?.value.toLowerCase() || '';
+    const selectedStatus = ordersStatusFilter?.value || '';
+
+    orderRows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      const matchesSearch = term === '' || text.includes(term);
+      const statusText = row.cells[6]?.innerText.trim(); // Статус — 7-я колонка
+      const matchesStatus = selectedStatus === '' || statusText === selectedStatus;
+      row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+    });
+  }
+
+  if (ordersSearchInput) ordersSearchInput.addEventListener('input', applyOrderFilters);
+  if (ordersStatusFilter) ordersStatusFilter.addEventListener('change', applyOrderFilters);
+
+  // === Сортировка orders ===
+  function sortTable(field) {
+    const indexMap = {
+      item_name: 0,
+      count: 1,
+      price: 2,
+      desired_date: 3,
+      status: 6
+    };
+    const colIndex = indexMap[field];
+    const sortedRows = [...orderRows].sort((a, b) => {
+      const aText = a.cells[colIndex].innerText.trim();
+      const bText = b.cells[colIndex].innerText.trim();
+      const aNum = parseFloat(aText.replace(',', '.'));
+      const bNum = parseFloat(bText.replace(',', '.'));
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return sortAsc ? aNum - bNum : bNum - aNum;
+      }
+      return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+    });
+
+    const tbody = document.getElementById('orders-body');
+    tbody.innerHTML = '';
+    sortedRows.forEach(row => tbody.appendChild(row));
+  }
+
+  document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const field = th.getAttribute('data-sort');
+      sortAsc = sortField === field ? !sortAsc : true;
+      sortField = field;
+      sortTable(field);
+    });
+  });
+
+  // === Таблица summary ===
+  const summaryStatusFilter = document.getElementById('summary-status-filter');
+  const summaryTable = document.querySelector('.summary-table');
+
+  function applySummaryFilter() {
+    const selected = summaryStatusFilter?.value;
+    if (!selected) {
+      summaryTable.style.display = '';
+    } else {
+      // Пример фильтрации: можно скрыть таблицу, если в ней нет данных под фильтр
+      // либо — фильтровать сервером и ререндерить (зависит от логики)
+      summaryTable.style.display = ''; // заглушка
+    }
+  }
+
+  if (summaryStatusFilter) summaryStatusFilter.addEventListener('change', applySummaryFilter);
+});
+
 </script>

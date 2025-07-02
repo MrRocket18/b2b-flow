@@ -380,6 +380,10 @@ h1 {
   color: #333;
 }
 
+/* .modal  {
+      border-radius: 33px 0px 0px 33px;
+} */
+
 /* ===== Адаптивность ===== */
 
 @media screen and (max-width: 768px) {
@@ -449,7 +453,7 @@ h1 {
   }
 
   .filter-item.active {
-    background-color: #2196f3;
+    background-color: #514caf;
     color: white;
     font-weight: 600;
   }
@@ -464,18 +468,28 @@ h1 {
     font-weight: 500;
   }
 
-  #search-input {
+
+    #search-input {
     color: white;
   }
 
-#search-input::placeholder {
+  #search-input::placeholder {
     color: rgba(255, 255, 255, 0.7);
   }
-#search {
+    #search {
     color: white !important;
     background-color: transparent;
   }
 
-#search::placeholder {
+  #search::placeholder {
     color: rgba(255, 255, 255, 0.6) !important;
   }
+
+  .dropdown-content li>a, .dropdown-content li>span {
+    font-size: 16px;
+    color: #2e2c9f;
+    /* color: #514caf; */
+    display: block;
+    line-height: 22px;
+    padding: 14px 16px;
+}
