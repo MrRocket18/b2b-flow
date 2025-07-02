@@ -74,7 +74,7 @@
               <td data-field="price">{{this.price}}</td>
               <td data-field="desired_date">{{this.desired_date}}</td>
               <td data-field="delivery_date">
-                <input type="date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}">
+                <input type="date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}" required>
                 <span class="formatted-date">
                   {{#if this.delivery_date}}
                     {{this.delivery_date }}
@@ -261,7 +261,9 @@
 
             // --- Обновляем значения в таблице ---
             row.querySelector('[data-field="delivery_date"] input').value = data.delivery_date || '';
-            row.querySelector('[data-field="delivery_date"] .formatted-date').textContent = formattedDeliveryDate;
+            if (data.delivery_date){
+              row.querySelector('[data-field="delivery_date"] .formatted-date').textContent = formattedDeliveryDate;
+            }
             row.querySelector('[data-field="status"] select').value = data.status;
             row.querySelector('[data-field="status"] select').dispatchEvent(new Event('change')); // Обновляем Materialize Select
             row.querySelector('[data-field="comment"] input').value = data.comment || '';
