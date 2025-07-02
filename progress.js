@@ -166,6 +166,7 @@ app.post('/', async(req, res) => {
       res.send('ok')
     }
     else{
+      res.send('not ok')
       return res.status(401).send("Invalid credentails");
     }
   } catch(error){

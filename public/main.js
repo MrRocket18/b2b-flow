@@ -7,11 +7,11 @@ $("#auth-form").on("submit", function (event) {
         $.post("/", {email: email, password: password})
         .done(function(data) {
             if (data == "ok"){
-                //showToast ("Авторизация прошла успешно!", "success");
+                M.toast({ html: 'Авторизация прошла успешно', classes: 'green rounded' });
                 reload(true);
             }
             else {
-                //showToast("Неверный email или пароль! Повторите попытку!", "danger");
+                M.toast({ html: 'Неправильный логин или пароль!', classes: 'red rounded' });
                 $("#email").val("");
                 $("#password").val("");
             }
