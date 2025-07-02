@@ -141,32 +141,160 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', function() {
     M.AutoInit();
+    const modalElement = document.getElementById('create-modal');
+    let modalInstance = M.Modal.getInstance(modalElement);
+    if (!modalInstance) {
+        modalInstance = M.Modal.init(modalElement, {});
+    }
 
-    const modalInstance = M.Modal.getInstance(document.getElementById('create-modal'));
-    const form = document.getElementById('order-form');
+    const orderForm = document.getElementById('order-form');
 
-    // --- Работа с формой редактирования и создания ---
-    document.querySelector('a.modal-trigger').addEventListener('click', () => {
-      document.getElementById('modal-title').textContent = 'Новый заказ';
-      form.action = '/create';
-      clearForm();
-      modalInstance.open();
-    });
-
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        const row = this.closest('tr');
-        const data = JSON.parse(row.dataset.request);
-        document.getElementById('modal-title').textContent = 'Редактировать заказ';
-        form.action = `/edit/${data.ID}`;
-        fillForm(data);
-        modalInstance.open();
+    function clearForm() {
+      const inputs = orderForm.querySelectorAll('input, textarea');
+      inputs.forEach(input => {
+        input.value = '';
+        if (input.classList.contains('valid') || input.classList.contains('invalid')) {
+          const parent = input.closest('.input-field');
+          if (parent) {
+            const label = parent.querySelector('label[for="' + input.id + '"]');
+            if (label) {
+                label.classList.remove('active');
+            }
+            input.classList.remove('valid', 'invalid');
+            const errorHelper = parent.querySelector('.helper-text');
+            if (errorHelper) {
+                errorHelper.textContent = '';
+            }
+          }
+        }
       });
+
+      const dateInput = document.getElementById('desired_date');
+      if (dateInput) {
+          const datepickerInstance = M.Datepicker.getInstance(dateInput);
+          if (datepickerInstance) {
+              datepickerInstance.setDate(null);
+          }
+          const today = new Date();
+          const formattedToday = today.toISOString().split('T')[0];
+          dateInput.setAttribute('min', formattedToday);
+          if (dateInput.classList.contains('initialized')) {
+              const pickerInstance = M.Datepicker.getInstance(dateInput);
+              if (pickerInstance) {
+                  pickerInstance.options.minDate = today;
+              }
+          }
+      }
+      orderForm.action = '/create';
+    }
+
+    const createModalTrigger = document.querySelector('a.modal-trigger');
+    if (createModalTrigger) {
+        createModalTrigger.addEventListener('click', (event) => {
+            document.getElementById('modal-title').textContent = 'Новый заказ';
+            orderForm.action = '/create';
+            clearForm();
+        });
+    }
+
+    const editButtons = document.querySelectorAll('.edit-btn');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            const orderId = this.getAttribute('data-id');
+
+            document.getElementById('modal-title').textContent = 'Редактировать заказ';
+            orderForm.action = `/edit/${orderId}`;
+
+            clearForm();
+
+            fetch(`/get-order/${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('item_name').value = data.item_name || '';
+                    document.getElementById('link').value = data.link || '';
+                    document.getElementById('count').value = data.count || '';
+                    document.getElementById('price').value = data.price || '';
+                    if (data.desired_date) {
+                      let desiredDateValue;
+                      if (data.desired_date.includes('.')) {
+                        const [day, month, year] = data.desired_date.split('.');
+                        if (day && month && year) {
+                          desiredDateValue = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        }
+                      } else {
+                        desiredDateValue = data.desired_date;
+                      }
+
+                      document.getElementById('desired_date').value = desiredDateValue || '';
+                    }
+                    document.getElementById('comment').value = data.comment || '';
+                    M.updateTextFields();
+                    modalInstance.open();
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке данных для редактирования:', error);
+                    M.toast({ html: 'Не удалось загрузить данные для редактирования.', classes: 'red rounded' });
+                });
+        });
+    });
+    
+    if (orderForm) {
+      orderForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(orderForm);
+            const method = orderForm.getAttribute('method') || 'POST';
+            const url = orderForm.action;
+
+            fetch(url, {
+                method: method,
+                body: formData,
+            })
+            .then(response => {
+                if (response.ok) {
+                    const isCreation = url.endsWith('/create');
+                    if (isCreation) {
+                        window.location.href = '/applications?toast=create-success';
+                    } else {
+                        window.location.href = '/applications?toast=edit-success';
+                    }
+                } else {
+                    console.error(`Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа:`, response.statusText);
+                    M.toast({ html: `Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа. Попробуйте позже.`, classes: 'red rounded' });
+                }
+            })
+            .catch(error => {
+                console.error('Сетевая ошибка:', error);
+                M.toast({ html: 'Ошибка сети. Не удалось выполнить операцию.', classes: 'red rounded' });
+            });
+        });
+    }
+
+    window.addEventListener('load', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const toastType = urlParams.get('toast');
+
+        if (toastType === 'create-success') {
+            M.toast({ html: 'Новый заказ успешно создан!', classes: 'green rounded' });
+        } else if (toastType === 'edit-success') {
+            M.toast({ html: 'Заказ успешно отредактирован!', classes: 'green rounded' });
+        } else if (toastType === 'error') {
+            M.toast({ html: 'Произошла ошибка при выполнении операции с заказом.', classes: 'red rounded' });
+        }
     });
 
-      document.addEventListener('click', async function (e) {
+
+    document.addEventListener('click', async function (e) {
       const cancelButton = e.target.closest('.btn-flat.cancel-btn');
 
       if (cancelButton) {
@@ -180,15 +308,15 @@
         
         const confirmationPromise = new Promise((resolve) => {
           
-          const confirmButton = document.getElementById('confirmCancelButton');
-          const cancelButtonClose = document.getElementById('cancelModalClose');
+        const confirmButton = document.getElementById('confirmCancelButton');
+        const cancelButtonClose = document.getElementById('cancelModalClose');
           
-          confirmButton.onclick = () => {
+        confirmButton.onclick = () => {
             resolve(true); 
             modalInstance.close(); 
           };
 
-          cancelButtonClose.onclick = () => {
+        cancelButtonClose.onclick = () => {
             resolve(false); 
             modalInstance.close(); 
           };
@@ -243,44 +371,7 @@
           M.toast({ html: 'Действие отменено.', classes: 'yellow rounded' });
         }
       }
-    });
-
-    function fillForm(data) {
-      document.getElementById('item_name').value = data.item_name || '';
-      document.getElementById('count').value = data.count || '';
-      document.getElementById('price').value = data.price || '';
-      document.getElementById('comment').value = data.comment || '';
-      document.getElementById('link').value = data.link || '';
-
-      if (data.desired_date) {
-        let desiredDateValue;
-
-        if (data.desired_date.includes('.')) {
-          const [day, month, year] = data.desired_date.split('.');
-          if (day && month && year) {
-            desiredDateValue = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-          }
-        } else {
-          desiredDateValue = data.desired_date;
-        }
-
-        document.getElementById('desired_date').value = desiredDateValue || '';
-      }
-
-      M.updateTextFields();
-    }
-
-    function clearForm() {
-      ['item_name', 'count', 'price', 'desired_date', 'comment', 'link'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-      M.updateTextFields();
-    }
-
-   
-    // --- Модальное окно отмены заказа ---
-    let orderIdToCancel = null;
+    });   
 
 
     // --- Фильтрация по статусу и поиску ---

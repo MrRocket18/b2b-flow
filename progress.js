@@ -198,7 +198,12 @@ app.get('/applications', async (req, res) => {
     res.status(500).send("Ошибка сервера при получении заявок.");
   }
 });
-
+app.get('/get-order/:id', async (req,res)=> {
+  const id = req.params.id
+  const request = await db.GetRequestById(id)
+  
+  res.json(request) 
+})
 app.get('/manager', async (req, res) => {
   if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
