@@ -1,107 +1,31 @@
-{{!-- File: views/authorization.hbs --}}
-<head>
-<style>
-  html, body {
-  height: 100%;
-  margin: 0;
-  align-content: center;
-  background: url('/images/bg.jpg') no-repeat center center fixed;
-  background-size: cover;
-}
-
-
-.auth-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-width: 900px;
-  max-height: 900px;
-  height: 100%;
-  padding: 10rem;
-  background: rgb(255 255 255 / 12%); 
-  border-radius: 30px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  margin: 0 auto;
-  box-sizing: border-box;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px); 
-}
-
-
-.auth-logo {
-    width: 200px;
-    margin-bottom: 1.5rem;
-    margin-top: -100px;
-}
-.auth-title {
-  margin-bottom: 2rem;
-  font-size: 2.5rem;
-  color: #faf3eb;
-}
-
-.auth-form .auth-input {
-  width: 100%;
-  padding: 1rem;
-  margin-bottom: 1.25rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
-  box-sizing: border-box;
-}
-.auth-form .auth-input {
-  color: #fff; 
-}
-
-
-.auth-button {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1.125rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #007BFF;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.auth-button:hover {
-  background-color: #0056b3;
-}
-
-
-</style>
-  
-
-</head>
-
-{{#*inline "styles"}}
-<link rel="stylesheet" href="/css/auth.css">
-{{/inline}}
-
-<div class="auth-container auth-page">
-  <img src="/images/logo.png" alt="Logo" class="auth-logo">
-  <h1 class="auth-title">Welcome</h1>
-  <form action="/" method="post" class="auth-form">
-    <input type="email" name="email" placeholder="Email" required class="auth-input">
-    <input type="password" name="password" placeholder="Password" required class="auth-input">
-    <button type="submit" class="auth-button" style="background-color: #faf3eb; color: #0b1957; ">Login</button>
-  </form>
+<div class="auth-page">
+  <div class="auth-background"></div>
+  <div class="auth-container z-depth-3">
+    <div class="auth-logo center-align">
+      <img src="/images/logo.png" alt="Логотип" class="responsive-img" style="max-height: 80px;">
+    </div>
+    <h5 class="center-align white-text">Добро пожаловать</h5>
+    <form id="auth-form" class="auth-form">
+      <div class="input-field">
+        <input id="email" type="email" name="email" maxlength="100">
+        <label for="email">Email</label>
+      </div>
+      <div class="input-field">
+        <input id="password" type="password" name="password" maxlength="255" required>
+        <label for="password">Пароль</label>
+      </div>
+      <div class="center-align">
+        <button type="submit" class="btn waves-effect waves-light blue darken-2">
+          Войти
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
+
 <script>
-  document.querySelector('.auth-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const form = this;
-    const data = new URLSearchParams(new FormData(form));
-    const res = await fetch(form.action, { method: 'POST', body: data });
-    if (res.ok) {
-      window.location.reload();
-    } else {
-      alert(await res.text());
-    }
+  document.addEventListener('DOMContentLoaded', function () {
+    M.updateTextFields(); // Обновляет плейсхолдеры для Materialize
   });
 </script>

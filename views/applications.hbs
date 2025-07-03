@@ -1,155 +1,516 @@
-<style>
-  .applications-container {
-  color: white;
-  }
+{{!-- views/user_applications.hbs --}}
 
-  table.highlight {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-collapse: collapse;
-    width: 100%;
-    color: white;
-  }
+<div class="orders-page-container">
+  <div class="header-section">
+    <h1 class="page-title">Мои заказы</h1>
 
-  table.highlight th,
-  table.highlight td {
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 12px 16px;
-    text-align: left;
-  }
-
- table.highlight th {
-    background-color: rgb(1 4 24 / 61%);
-}
-
-  table.highlight tbody tr:nth-child(even) {
-    background-color: rgba(255, 0, 0, 0.012);
-  }
-  table.striped>tbody>tr:nth-child(odd)
-
- {
-    background-color:rgb(255 255 255 / 18%);
-}
-
-  .status-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: bold;
-    color: white;
-    display: inline-block;
-  }
-
-  .status-badge.new { background-color: #1976d2; }
-  .status-badge.pending { background-color: #ff9800; }
-  .status-badge.completed { background-color: #4caf50; }
-  .status-badge.cancelled { background-color: #f44336; }
-
-  .input-field input[type="search"],
-  .input-field input[type="search"]::placeholder {
-    color: white;
-  }
-</style>
-
-<div class="applications-container">
-  <div class="top-panel">
-  <div class="row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-
-    <div >
-      <h1 class="applications-title white-text" style="margin: 0;">Мои заявки</h1>
-    </div>
-
-    <div style="flex: 2; display: flex; justify-content: center;">
-      <div style="position: relative; width: 100%; max-width: 400px; margin-top: 26px;">
-        <input type="text" id="search" placeholder="Поиск..." 
-               style="width: 100%; padding-right: 36px; height: 3rem; font-size: 16px; color: white; background-color: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px;">
-        <i class="material-icons" style="    position: absolute;
-    right: -26px;
-    top: 12px;
-    color: white;
-    cursor: pointer;">search</i>
+    <div class="filter-search-wrapper">
+      <div class="search-container input-field">
+        <input id="search" type="text" placeholder="Поиск по заказам...">
       </div>
-    </div>
 
-    <div style="flex: 1; display: flex; justify-content: flex-end;">
-      <a href="/create" class="btn-floating btn-large waves-effect waves-light indigo darken-4 tooltipped"
-         data-tooltip="Создать заявку">
-        <i class="material-icons">add_circle</i>
+      <div class="input-field status-select-wrapper">
+        <select id="status-filter">
+          <option value="">Все статусы</option>
+          <option value=0>На рассмотрении</option>
+          <option value=1>Закупаем</option>
+          <option value=2>Ждём поставку</option>
+          <option value=3>Готово к получению</option>
+          <option value=4>Получен</option>
+        </select>
+        <label>Фильтр по статусу</label>
+      </div>
+
+      <a class="btn-floating btn-large waves-effect waves-light blue modal-trigger" href="#create-modal" title="Добавить">
+        <i class="material-icons">add</i>
       </a>
     </div>
-
   </div>
-</div>
 
-
-  <div class="table-responsive">
-    <table class="highlight striped sortable">
+  <div class="orders-container card-panel white lighten-1">
+    <table class="highlight responsive-table">
       <thead>
         <tr>
-          <th class="sortable">Название <i class="material-icons sort-icon">unfold_more</i></th>
-          <th class="sortable">Количество <i class="material-icons sort-icon">unfold_more</i></th>
-          <th class="sortable">Цена <i class="material-icons sort-icon">unfold_more</i></th>
-          <th>Желаемая дата</th>
-          <th class="sortable">Статус <i class="material-icons sort-icon">unfold_more</i></th>
-          <th>Дата поставки</th>
+          <th class="sortable" data-sort="item_name">Название</th>
+          <th class="sortable" data-sort="count">Кол-во</th>
+          <th class="sortable" data-sort="price">Цена</th>
+          <th class="sortable" data-sort="desired_date">Желаемая дата</th>
+          <th class="sortable" data-sort="delivery_date">Ожидаемая доставка</th>
+          <th>Статус</th>
           <th>Комментарий</th>
           <th>Действия</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="orders-body">
         {{#each requests}}
-        <tr>
-          <td>
-            {{#if link}}
-              <a href="{{link}}" target="_blank" style="color: #ffffff;
-    text-decoration: revert;">{{item_name}}</a>
-            {{else}}
-              {{item_name}}
-            {{/if}}
-          </td>
-          <td>{{count}}</td>
-          <td>{{price}} ₽</td>
-          <td>{{desired_date}}</td>
-          <td>
-            <span class="status-badge {{lowercase status}}">{{status}}</span>
-          </td>
-          <td>{{delivery_date}}</td>
-          <td>{{comment}}</td>
-          <td>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-              <a href="/edit?id={{ID}}" class="btn-small waves-effect waves-light indigo darken-4" title="Редактировать">
-                <i class="material-icons">edit</i>
-              </a>
-              <a href="/repeat?id={{ID}}" class="btn-small waves-effect waves-light indigo darken-4" title="Повторить заявку">
-                <i class="material-icons">replay</i>
-              </a>
-            </div>
-          </td>
-        </tr>
+          {{#if (isEqual this.status 4)}}
+          {{else}}
+            <tr data-request='{
+              "ID": "{{this.ID}}",
+              "item_name": "{{this.item_name}}",
+              "count": "{{this.count}}",
+              "price": "{{this.price}}",
+              "desired_date": "{{this.desired_date}}",
+              "delivery_date": "{{this.delivery_date}}",
+              "comment": "{{this.comment}}",
+              "status": "{{this.status}}",
+              "link": "{{this.link}}"
+            }'>
+              <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
+              <td>{{this.count}}</td>
+              <td>{{this.price}}</td>
+              <td>{{this.desired_date}}</td>
+              <td>{{#if this.delivery_date}}
+                    {{this.delivery_date }}
+                  {{else}}
+                    —
+                  {{/if}}</td>
+              <td>
+                <span value="{{this.status}}" class="status-badge">
+                  {{#if (isEqual this.status 0)}} На рассмотрении {{/if}}
+                  {{#if (isEqual this.status 1)}} Закупаем {{/if}}
+                  {{#if (isEqual this.status 2)}} Ждём поставку {{/if}}
+                  {{#if (isEqual this.status 3)}} Готово к получению {{/if}}
+                  {{#if (isEqual this.status 4)}} Получен {{/if}}
+                </span>
+              </td>
+              <td>{{this.comment}}</td>
+              <td>
+                {{#if (eq this.status 0)}}
+                  <button class="btn-flat edit-btn" data-id="{{ID}}"><i class="material-icons">edit</i></button>
+                  <button class="btn-flat cancel-btn" data-id="{{ID}}"><i class="material-icons">cancel</i></button>
+                {{/if}}
+              </td>
+            </tr>
+          {{/if}}
         {{/each}}
       </tbody>
     </table>
   </div>
 </div>
 
+<!-- Модальное окно создания/редактирования -->
+<div id="create-modal" class="modal">
+  <form id="order-form" method="POST">
+    <div class="modal-content">
+      <h5 id="modal-title">Новый заказ</h5>
+      <div class="input-field">
+        <input name="item_name" id="item_name" type="text" maxlength="50" required>
+        <label for="item_name">Название товара</label>
+      </div>
+      <div class="input-field">
+        <input name="link" id="link" type="url" maxlength="1000">
+        <label for="link">Ссылка на товар</label>
+      </div>
+      <div class="input-field">
+        <input name="count" id="count" type="number"  min="1"  max = "9999999999999999999999999999999999999999" required>
+        <label for="count">Количество</label>
+      </div>
+      <div class="input-field">
+        <input name="price" id="price" type="number"  min="1" max = "9999999999999999999999999999999999999999" step="0.01" required>
+        <label for="price">Цена</label>
+      </div>
+      <div class="input-field">
+        <input name="desired_date" id="desired_date" type="date" min="{{todayDate}}" required>
+        <label for="desired_date">Желаемая дата</label>
+      </div>
+      <div class="input-field">
+        <textarea name="comment" id="comment" class="materialize-textarea" maxlength="500" > </textarea>
+        <label for="comment">Комментарий</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn green">Сохранить</button>
+      <a href="#!" class="modal-close btn-flat">Отмена</a>
+    </div>
+  </form>
+</div>
+
+<!-- Модальное окно подтверждения отмены -->
+<div id="cancelOrderModal" class="modal">
+  <div class="modal-content">
+    <h4>Подтверждение отмены</h4>
+    <p>Вы уверены, что хотите отменить этот заказ?</p>
+  </div>
+  <div class="modal-footer">
+    <button class="modal-close waves-effect waves-green btn-flat" id="cancelModalClose">Отмена</button>
+    <button class="modal-close waves-effect waves-red btn-flat" id="confirmCancelButton">Подтвердить</button>
+  </div>
+</div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     M.AutoInit();
+    const modalElement = document.getElementById('create-modal');
+    let modalInstance = M.Modal.getInstance(modalElement);
+    if (!modalInstance) {
+        modalInstance = M.Modal.init(modalElement, {});
+    }
 
-    document.querySelectorAll('.sortable th').forEach((th, index) => {
-      th.addEventListener('click', () => {
-        const icon = th.querySelector('.sort-icon');
-        const isAsc = icon.textContent === 'arrow_drop_up';
-        icon.textContent = isAsc ? 'arrow_drop_down' : 'arrow_drop_up';
+    const orderForm = document.getElementById('order-form');
 
-        const table = th.closest('table');
-        const rows = Array.from(table.querySelectorAll('tbody tr'));
-        rows.sort((a, b) => {
-          const aText = a.children[index].textContent.trim();
-          const bText = b.children[index].textContent.trim();
-          return isAsc ? bText.localeCompare(aText) : aText.localeCompare(bText);
-        });
-        const tbody = table.querySelector('tbody');
-        rows.forEach(row => tbody.appendChild(row));
+    function clearForm() {
+      const inputs = orderForm.querySelectorAll('input, textarea');
+      inputs.forEach(input => {
+        input.value = '';
+        if (input.classList.contains('valid') || input.classList.contains('invalid')) {
+          const parent = input.closest('.input-field');
+          if (parent) {
+            const label = parent.querySelector('label[for="' + input.id + '"]');
+            if (label) {
+                label.classList.remove('active');
+            }
+            input.classList.remove('valid', 'invalid');
+            const errorHelper = parent.querySelector('.helper-text');
+            if (errorHelper) {
+                errorHelper.textContent = '';
+            }
+          }
+        }
       });
+
+      const dateInput = document.getElementById('desired_date');
+      if (dateInput) {
+          const datepickerInstance = M.Datepicker.getInstance(dateInput);
+          if (datepickerInstance) {
+              datepickerInstance.setDate(null);
+          }
+          const today = new Date();
+          const formattedToday = today.toISOString().split('T')[0];
+          dateInput.setAttribute('min', formattedToday);
+          if (dateInput.classList.contains('initialized')) {
+              const pickerInstance = M.Datepicker.getInstance(dateInput);
+              if (pickerInstance) {
+                  pickerInstance.options.minDate = today;
+              }
+          }
+      }
+      
+    }
+
+    const createModalTrigger = document.querySelector('a.modal-trigger');
+    if (createModalTrigger) {
+        createModalTrigger.addEventListener('click', (event) => {
+            document.getElementById('modal-title').textContent = 'Новый заказ';
+            orderForm.action = '/create';
+            clearForm();
+        });
+    }
+
+    const editButtons = document.querySelectorAll('.edit-btn');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            const orderId = this.getAttribute('data-id');
+
+            document.getElementById('modal-title').textContent = 'Редактировать заказ';
+            orderForm.action = `/edit/${orderId}`;
+
+            clearForm();
+
+            fetch(`/get-order/${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('item_name').value = data.item_name || '';
+                    document.getElementById('link').value = data.link || '';
+                    document.getElementById('count').value = data.count || '';
+                    document.getElementById('price').value = data.price || '';
+                    if (data.desired_date) {
+                      let desiredDateValue;
+                      if (data.desired_date.includes('.')) {
+                        const [day, month, year] = data.desired_date.split('.');
+                        if (day && month && year) {
+                          desiredDateValue = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        }
+                      } else {
+                        desiredDateValue = data.desired_date;
+                      }
+
+                      document.getElementById('desired_date').value = desiredDateValue || '';
+                    }
+                    document.getElementById('comment').value = data.comment || '';
+                    M.updateTextFields();
+                    modalInstance.open();
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке данных для редактирования:', error);
+                    M.toast({ html: 'Не удалось загрузить данные для редактирования.', classes: 'red rounded' });
+                });
+        });
     });
+    
+    if (orderForm) {
+      orderForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(orderForm);
+            const method = orderForm.getAttribute('method') || 'POST';
+            const url = orderForm.action;
+
+            fetch(url, {
+                method: method,
+                body: formData,
+            })
+            .then(response => {
+                if (response.ok) {
+                  const isCreation = url.endsWith('/create'); 
+                  let redirectUrl = '/applications'; 
+
+                  if (isCreation) {
+                      redirectUrl += '?toast=create-success';
+                  } else {
+                      redirectUrl += '?toast=edit-success';
+                  }
+
+                  window.location.href = redirectUrl; 
+              } else {
+                console.error(`Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа:`, response.statusText);
+                M.toast({ html: `Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа. Попробуйте позже.`, classes: 'red rounded' });
+            }
+        })
+            .catch(error => {
+                console.error('Сетевая ошибка:', error);
+                M.toast({ html: 'Ошибка сети. Не удалось выполнить операцию.', classes: 'red rounded' });
+            });
+        });
+    }
+
+    window.addEventListener('load', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const toastType = urlParams.get('toast');
+        console.log(toastType)
+        if (toastType === 'create-success') {
+            M.toast({ html: 'Новый заказ успешно создан!', classes: 'green rounded' });
+        } else if (toastType === 'edit-success') {
+            M.toast({ html: 'Заказ успешно отредактирован!', classes: 'green rounded' });
+        } else if (toastType === 'error') {
+            M.toast({ html: 'Произошла ошибка при выполнении операции с заказом.', classes: 'red rounded' });
+        }
+    });
+
+
+    document.addEventListener('click', async function (e) {
+      const cancelButton = e.target.closest('.btn-flat.cancel-btn');
+
+      if (cancelButton) {
+        const orderId = cancelButton.dataset.id;
+
+      
+        const cancelOrderModal = document.getElementById('cancelOrderModal');
+        const modalInstance = M.Modal.init(cancelOrderModal);
+        modalInstance.open();
+
+        
+        const confirmationPromise = new Promise((resolve) => {
+          
+        const confirmButton = document.getElementById('confirmCancelButton');
+        const cancelButtonClose = document.getElementById('cancelModalClose');
+          
+        confirmButton.onclick = () => {
+            resolve(true); 
+            modalInstance.close(); 
+          };
+
+        cancelButtonClose.onclick = () => {
+            resolve(false); 
+            modalInstance.close(); 
+          };
+        });
+
+        const confirmed = await confirmationPromise;
+        
+        if (confirmed) {
+          try {
+            const response = await fetch(`/order-cancel/${orderId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({})
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+              const row = cancelButton.closest('tr');
+              if (row) {
+              
+                const statusSpan = row.querySelector('td:nth-child(6) > span');
+                if (statusSpan) {
+                  statusSpan.textContent = 'Отменено'; 
+                  statusSpan.setAttribute('value', 5); 
+                }
+
+                const buttonCell = row.querySelector('td:last-child'); 
+                if (buttonCell) {
+                  buttonCell.innerHTML = '';
+                }
+
+                M.toast({ html: 'Заказ успешно отменен!', classes: 'green rounded' });
+              } else {
+                console.error('Не удалось найти строку таблицы для обновления.');
+                M.toast({ html: 'Не удалось отменить заказ!', classes: 'red rounded' });
+              }
+            } else {
+              alert('Ошибка: ' + (result.error || 'Не удалось отменить заказ'));
+            }
+          } catch (err) {
+            console.error('AJAX ошибка:', err);
+            alert('Серверная ошибка');
+          }
+        } else {
+          M.toast({ html: 'Действие отменено.', classes: 'yellow rounded' });
+        }
+      }
+    });   
+
+
+    // --- Фильтрация по статусу и поиску ---
+    const searchInput = document.getElementById('search');
+    const statusFilter = document.getElementById('status-filter');
+    const rows = Array.from(document.querySelectorAll('#orders-body tr'));
+    let sortField = null;
+    let sortAsc = true;
+
+    function applyFilters() {
+      const search = searchInput.value.toLowerCase();
+      const selectedStatus = statusFilter.value;
+
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const status = row.querySelector('.status-badge')?.getAttribute('value') || '';
+        const matchesSearch = !search || text.includes(search);
+        const matchesStatus = !selectedStatus || status === selectedStatus;
+        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+      });
+    }
+
+    document.querySelectorAll('.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          sortAsc = sortField === field ? !sortAsc : true;
+          sortField = field;
+          sortTable(field);
+        });
+    });
+    
+    function sortTable(field) {
+        const indexMap = {
+          item_name: 0,
+          count: 1,
+          price: 2,
+          desired_date: 3,
+          delivery_date: 4
+        };
+        const colIndex = indexMap[field];
+        const sortedRows = [...rows].sort((a, b) => {
+          const aText = (a.cells[colIndex]?.innerText || '').trim();
+          const bText = (b.cells[colIndex]?.innerText || '').trim();
+          const aNum = parseFloat(aText.replace(',', '.'));
+          const bNum = parseFloat(bText.replace(',', '.'));
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            return sortAsc ? aNum - bNum : bNum - aNum;
+          }
+          return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+        });
+
+        const tbody = document.getElementById('orders-body');
+        tbody.innerHTML = '';
+        sortedRows.forEach(row => tbody.appendChild(row));
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
   });
 </script>
+
+<style>
+  .orders-page-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #2c3e50;
+  }
+
+  .filter-search-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .search-container {
+    flex-grow: 1;
+    max-width: 300px;
+    position: relative;
+  }
+
+  .search-container input {
+    padding-left: 36px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .search-container .material-icons.prefix {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    color: #888;
+  }
+
+  .status-select-wrapper {
+    min-width: 200px;
+  }
+
+  .orders-container {
+    margin-top: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .orders-container table {
+    margin: 0;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    background-color: #1976d2;
+    color: white;
+    font-weight: 500;
+  }
+
+  @media screen and (max-width: 768px) {
+    .filter-search-wrapper {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .page-title {
+      font-size: 22px;
+      text-align: center;
+    }
+  }
+</style>

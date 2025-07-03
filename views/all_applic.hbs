@@ -1,144 +1,317 @@
-<h1 class="applications-title">Все заявки</h1>
+{{!-- views/all_applic.hbs --}}
+<div class="orders-page-container">
+  <h1 class="orders-page-title">Все заказы</h1>
 
-<div class="search-container">
-  <div class="input-field">
-    <input id="search" type="text" class="validate">
-    <label for="search">Поиск заявок</label>
-    <i class="material-icons search-icon">search</i>
+  <!-- Сводная таблица -->
+  <div class="card-panel white lighten-1 summary-container">
+    <table class="striped centered highlight summary-table">
+      <thead>
+        <tr>
+          <th>Новые</th>
+          <th>В обработке</th>
+          <th>Выполнено</th>
+          <th>Отменено</th>
+          <th>Итого</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {{#each summary}}
+            <td>{{this.new}}</td>
+            <td>{{this.processing}}</td>
+            <td>{{this.completed}}</td>
+            <td>{{this.cancelled}}</td>
+            <td>{{this.total}}</td>
+          {{/each}}
+        </tr>
+      </tbody>
+    </table>
   </div>
-</div>
 
-<div class="summary-card">
-  <h2>Суммарная стоимость заявок:</h2>
-  <div class="summary-items">
-    <div class="summary-item">
-      <span class="status-indicator new"></span>
-      <span>Новые:</span>
-      <span class="amount">{{summary.new}} ₽</span>
+  <!-- Фильтры -->
+  <div class="row filter-bar">
+    <div class="input-field col s6 m6">
+      <input type="text" id="search-input" placeholder="Поиск названию, пользователю, дате">
     </div>
-    <div class="summary-item">
-      <span class="status-indicator processing"></span>
-      <span>В обработке:</span>
-      <span class="amount">{{summary.processing}} ₽</span>
-    </div>
-    <div class="summary-item">
-      <span class="status-indicator completed"></span>
-      <span>Выполнено:</span>
-      <span class="amount">{{summary.completed}} ₽</span>
-    </div>
-    <div class="summary-item">
-      <span class="status-indicator cancelled"></span>
-      <span>Отменено:</span>
-      <span class="amount">{{summary.cancelled}} ₽</span>
-    </div>
-    <div class="summary-total">
-      <span>Итого:</span>
-      <span class="total-amount">{{summary.total}} ₽</span>
+    <div class="input-field col s6 m6">
+      <select id="status-filter">
+        <option value="">Все статусы</option>
+        <option value=0>На рассмотрении</option>
+        <option value=1>Закупаем</option>
+        <option value=2>Ждём поставку</option>
+        <option value=3>Готово к получению</option>
+        <option value=4>Получен</option>
+      </select>
+      <label>Фильтр по статусу</label>
     </div>
   </div>
-</div>
 
-<div class="table-responsive">
-  <table class="highlight striped sortable">
-    <thead>
-      <tr>
-        <th class="sortable-header" data-column="name">Название <i class="material-icons sort-icon">unfold_more</i></th>
-        <th class="sortable-header" data-column="quantity">Количество <i class="material-icons sort-icon">unfold_more</i></th>
-        <th class="sortable-header" data-column="price">Цена <i class="material-icons sort-icon">unfold_more</i></th>
-        <th>Ссылка</th>
-        <th>Желаемая дата</th>
-        <th>ID пользователя</th>
-        <th class="sortable-header" data-column="status">Статус <i class="material-icons sort-icon">unfold_more</i></th>
-        <th>Дата поставки</th>
-        <th>Комментарии</th>
-        <th>Действия</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each requests}}
-      <tr>
-        <td>{{item_name}}</td>
-        <td>{{count}}</td>
-        <td>{{price}} ₽</td>
-        <td>
-          {{#if link}}
-            <a href="{{link}}" target="_blank" class="btn-flat">Ссылка</a>
+  <!-- Основная таблица -->
+  <div class="card-panel white lighten-1 orders-container">
+    <table class="striped highlight responsive-table" id="orders-table">
+      <thead>
+        <tr>
+          <th class="sortable" data-sort="item_name">Название</th>
+          <th class="sortable" data-sort="count">Кол-во</th>
+          <th class="sortable" data-sort="price">Цена</th>
+          <th class="sortable" data-sort="desired_date">Желаемая дата</th>
+          <th class="sortable" data-sort="delivery_date">Предполагаемая дата</th>
+          <th>Пользователь</th>
+          <th data-sort="status">Статус</th>
+          <th>Комментарий</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="orders-body">
+        {{#each requests}}
+          {{#if (isEqual this.status 4)}}
           {{else}}
-            —
+            {{#if (isEqual this.status 5)}}
+            {{else}}
+            <tr>
+              <form class="order-form" data-id="{{this.ID}}">
+                <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
+                <td data-field="count">{{this.count}}</td>
+                <td data-field="price">{{this.price}}</td>
+                <td data-field="desired_date">{{this.desired_date}}</td>
+                <td class="hide" data-field="registration_date">{{this.registration_date}}</td>
+                <td data-field="delivery_date" required>
+                  <input type="date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}" required>
+                  <span class="formatted-date">
+                    {{#if this.delivery_date}}
+                      {{this.delivery_date }}
+                    {{else}}
+                      —
+                    {{/if}}
+                  </span>
+                </td>
+                <td data-field="user_fullname">{{this.user_fullname}}</td>
+                <td data-field="status">
+                  <select name="status" class="browser-default">
+                    <option value=0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
+                    <option value=1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
+                    <option value=2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
+                    <option value=3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
+                    <option value=4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
+                    <option value=5 {{#if (isEqual this.status 5)}}selected{{/if}}>Отменено</option>
+                  </select>
+                </td>
+                <td data-field="comment">
+                  <input type="text" name="comment" maxlength="500" value="{{this.comment}}">
+                </td>
+                <td>
+                  <button type="button" class="btn-flat tooltipped save-order-btn" data-tooltip="Сохранить изменения">
+                    <i class="material-icons green-text">check</i>
+                  </button>
+                </td>
+              </form>
+            </tr>
+            {{/if}}
           {{/if}}
-        </td>
-        <td>{{desired_date}}</td>
-        <td>
-          <a href="/users/{{user_id}}" class="user-id-link">#{{user_id}}</a>
-        </td>
-        <td>
-          <span class="status-badge {{lowercase status}}">{{status}}</span>
-        </td>
-        <td>{{delivery_date}}</td>
-        <td>
-          <a href="#" class="btn-floating btn-small waves-effect waves-light blue" title="Комментарий">
-            <i class="material-icons">comment</i>
-          </a>
-        </td>
-        <td>
-          <a href="/edit?id={{id}}" class="btn-floating btn-small waves-effect waves-light grey" title="Редактировать">
-            <i class="material-icons">edit</i>
-          </a>
-        </td>
-      </tr>
-      {{/each}}
-    </tbody>
-  </table>
-</div>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    M.AutoInit();
+  <!-- MODAL -->
+  <div id="status-modal" class="modal">
+    <form method="POST" id="status-form">
+      <div class="modal-content">
+        <h5>Изменить статус заявки</h5>
+        <div class="input-field">
+          <select name="new_status" id="new-status-select" required>
+            <option value="" disabled selected>Выберите статус</option>
+            <option value="На рассмотрении">На рассмотрении</option>
+            <option value="Закупаем">Закупаем</option>
+            <option value="Ждём поставку">Ждём поставку</option>
+            <option value="Готово к получению">Готово к получению</option>
+            <option value="Получен">Получен</option>
+          </select>
+          <label>Новый статус</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="modal-close btn green">Сохранить</button>
+        <a class="modal-close btn-flat">Отмена</a>
+      </div>
+    </form>
+  </div>
 
-    function sortTable(columnIndex, direction) {
-      const table = document.querySelector('.sortable');
-      const tbody = table.querySelector('tbody');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // --- Инициализация Materialize ---
+      const modalEl = document.querySelector('#status-modal');
+      const modal = M.Modal.init(modalEl);
+      const selects = document.querySelectorAll('select');
+      M.FormSelect.init(selects);
 
-      rows.sort((a, b) => {
-        const aText = a.cells[columnIndex].textContent.trim();
-        const bText = b.cells[columnIndex].textContent.trim();
-
-        if (columnIndex === 1 || columnIndex === 2) {
-          const aNum = parseFloat(aText.replace(/[^\d.]/g, ''));
-          const bNum = parseFloat(bText.replace(/[^\d.]/g, ''));
-          return direction === 'asc' ? aNum - bNum : bNum - aNum;
-        }
-
-        return direction === 'asc'
-          ? aText.localeCompare(bText)
-          : bText.localeCompare(aText);
+      // --- Ограничение на минимальную дату ---
+      const deliveryDateInputs = document.querySelectorAll('[name="delivery_date"]');
+      deliveryDateInputs.forEach(input => {
+        const today = new Date();
+        const todayDate = today.toISOString().slice(0, 10);
+        input.setAttribute('min', todayDate);
       });
 
-      while (tbody.firstChild) {
-        tbody.removeChild(tbody.firstChild);
+      // --- Модальное окно изменения статуса ---
+      const form = document.getElementById('status-form');
+      document.querySelectorAll('.change-status-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const currentStatus = btn.dataset.status;
+          form.action = `/update-status/${id}`;
+          const select = document.getElementById('new-status-select');
+          [...select.options].forEach(opt => {
+            opt.selected = (opt.value === currentStatus);
+          });
+          M.FormSelect.init(select);
+          modal.open();
+        });
+      });
+
+      // --- Фильтрация и сортировка ---
+      const searchInput = document.getElementById('search-input');
+      const statusFilter = document.getElementById('status-filter');
+      let rows = Array.from(document.querySelectorAll('#orders-body tr'));
+      let sortField = null;
+      let sortAsc = true;
+
+      function applyFilters() {
+        const term = searchInput?.value.toLowerCase() || '';
+        const selectedStatus = statusFilter?.value || '';
+
+        rows.forEach(row => {
+          const text = row.innerText.toLowerCase();
+          const cell = row.cells[6]?.querySelector('select');
+          const matchesSearch = !term || text.includes(term);
+          const matchesStatus = !selectedStatus || (cell && cell.value === selectedStatus);
+          row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        });
       }
 
-      rows.forEach(row => tbody.appendChild(row));
-    }
-
-
-    document.querySelectorAll('.sortable-header').forEach(header => {
-      header.addEventListener('click', function () {
-        const columnIndex = Array.from(this.parentNode.children).indexOf(this);
-        const isAsc = this.classList.contains('asc');
-        const direction = isAsc ? 'desc' : 'asc';
-
-        document.querySelectorAll('.sortable-header').forEach(h => {
-          h.classList.remove('asc', 'desc');
-          h.querySelector('.sort-icon').textContent = 'unfold_more';
+      function sortTable(field) {
+        const indexMap = {
+          item_name: 0,
+          count: 1,
+          price: 2,
+          desired_date: 3,
+          delivery_date: 5
+        };
+        const colIndex = indexMap[field];
+        const sortedRows = [...rows].sort((a, b) => {
+          const aText = (a.cells[colIndex]?.innerText || '').trim();
+          const bText = (b.cells[colIndex]?.innerText || '').trim();
+          const aNum = parseFloat(aText.replace(',', '.'));
+          const bNum = parseFloat(bText.replace(',', '.'));
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            return sortAsc ? aNum - bNum : bNum - aNum;
+          }
+          return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
         });
 
-        this.classList.add(direction);
-        this.querySelector('.sort-icon').textContent = direction === 'asc' ? 'arrow_downward' : 'arrow_upward';
+        const tbody = document.getElementById('orders-body');
+        tbody.innerHTML = '';
+        sortedRows.forEach(row => tbody.appendChild(row));
+      }
 
-        sortTable(columnIndex, direction);
+      document.querySelectorAll('.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          sortAsc = sortField === field ? !sortAsc : true;
+          sortField = field;
+          sortTable(field);
+        });
       });
+
+      if (searchInput) searchInput.addEventListener('input', applyFilters);
+      if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+
+      // --- Сохранение изменений заказа ---
+      document.addEventListener('click', async function (e) {
+        const button = e.target.closest('.save-order-btn');
+        if (!button) return;
+
+        const row = button.closest('tr');
+        const form = row.querySelector('form.order-form');
+        const orderId = form.dataset.id;
+
+        const deliveryDateInput = row.querySelector('[name="delivery_date"]');
+        const statusSelect = row.querySelector('[name="status"]');
+        const commentInput = row.querySelector('[name="comment"]');
+
+        const data = {
+          delivery_date: deliveryDateInput.value,
+          status: parseInt(statusSelect.value),
+          comment: commentInput.value
+        };
+
+        try {
+          const response = await fetch(`/admin-update/${orderId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            M.toast({ html: 'Изменения успешно сохранены', classes: 'green darken-1 rounded' });
+
+            // --- Форматируем дату как ДД.ММ.ГГ ---
+            const formattedDeliveryDate = data.delivery_date ? formatDate(data.delivery_date, 'DD.MM.YYYY') : '—';
+
+            // --- Обновляем значения в таблице ---
+            row.querySelector('[data-field="delivery_date"] input').value = data.delivery_date || '';
+            if (data.delivery_date){
+              row.querySelector('[data-field="delivery_date"] .formatted-date').textContent = formattedDeliveryDate;
+            }
+            row.querySelector('[data-field="status"] select').value = data.status;
+            row.querySelector('[data-field="status"] select').dispatchEvent(new Event('change')); // Обновляем Materialize Select
+            row.querySelector('[data-field="comment"] input').value = data.comment || '';
+
+            // --- ОБНОВЛЯЕМ СПИСОК ROWS ДЛЯ ФИЛЬТРАЦИИ ---
+            rows = Array.from(document.querySelectorAll('#orders-body tr'));
+
+            // --- ПОВТОРНО ПРИМЕНЯЕМ ФИЛЬТР ---
+            applyFilters();
+
+          } else {
+            M.toast({ html: result.message || 'Ошибка при сохранении', classes: 'red darken-1 rounded' });
+          }
+
+        } catch (error) {
+          console.error('Ошибка:', error);
+          M.toast({ html: 'Ошибка сети при сохранении', classes: 'red darken-1 rounded' });
+        }
+      });
+
+      // --- Вспомогательная функция для форматирования даты ---
+      function formatDate(dateString, format) {
+        if (!dateString) return '—';
+        const date = new Date(dateString);
+        let day = date.getDate();
+        let month = date.getMonth() + 1;
+        const year = date.getFullYear();
+
+        day = String(day).padStart(2, '0');
+        month = String(month).padStart(2, '0');
+
+        return `${day}.${month}.${year}`;
+      }
+
+      // --- Вспомогательная функция для отображения статуса ---
+      function getStatusLabel(status) {
+        const labels = {
+          0: 'На рассмотрении',
+          1: 'Закупаем',
+          2: 'Ждём поставку',
+          3: 'Готово к получению',
+          4: 'Получен',
+          5: 'Отменено'
+        };
+        return labels[status] || 'Неизвестный статус';
+      }
     });
-  });
-</script>
+  </script>

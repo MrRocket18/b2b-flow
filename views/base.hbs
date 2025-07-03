@@ -1,32 +1,28 @@
-<div class="users-container">
-  <div class="header-section" style="display: flex; justify-content: space-between; align-items: center;">
-    <div>
-      <h1 class="page-title">База пользователей</h1>
+{{!-- views/base.hbs --}}
 
-      <div class="filter-section">
-        <div class="filter-item active">
-          <span>Все пользователи</span>
-        </div>
-        <div class="filter-item">
-          <span>Активные</span>
-        </div>
-        <div class="filter-item">
-          <span>Неактивные</span>
-        </div>
+<div class="users-page-container">
+  <div class="header-section">
+    <h1 class="page-title">База пользователей</h1>
+
+    <div class="filter-search-wrapper">
+      <div class="input-field role-filter-wrapper">
+        <select id="role-filter">
+          <option value="">Все роли</option>
+          <option value= 1>Администраторы</option>
+          <option value= 0>Пользователи</option>
+        </select>
+        <label>Фильтр по роли</label>
       </div>
-    </div>
 
-    <div class="search-container" style="margin-top: 10px;">
-      <div class="input-field">
+      <div class="search-container input-field">
         <input id="search" type="text" placeholder="Поиск пользователей...">
-        <i class="material-icons prefix" style="position: absolute; right: 10px; top: 10px;">search</i>
       </div>
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <div class="users-table">
+  <div class="users-table card-panel white lighten-1">
     <table class="highlight responsive-table">
       <thead>
         <tr>
@@ -34,32 +30,38 @@
           <th>Имя</th>
           <th>Email</th>
           <th>Телефон</th>
-          <th>Активность</th>
-          <th>Статус</th>
+          <th>Кол-во заказов</th>
+          <th>Роль</th>
           <th>Действия</th>
         </tr>
       </thead>
       <tbody>
-        {{#each users}}
-          <tr>
-            <td>{{id}}</td>
-            <td>{{name}}</td>
-            <td><a href="mailto:{{email}}">{{email}}</a></td>
-            <td><a href="tel:{{tel}}">{{tel}}</a></td>
-            <td>
-              {{#if (eq orders 0)}}
-                Нет заказов
-              {{else}}
-                {{orders}} {{pluralize orders "заказ" "заказа" "заказов"}}
-              {{/if}}
-            </td>
-            <td><span class="status-badge {{status}}">{{lookupStatusLabel status}}</span></td>
-            <td>
-              <a class="btn-flat waves-effect tooltipped" data-tooltip="Удалить" data-position="top">
-                <i class="material-icons">delete</i>
-              </a>
-            </td>
-          </tr>
+        {{#each base}}
+        <tr>
+          <td>{{ID}}</td>
+          <td>{{user_fullname}}</td>
+          <td><a href="mailto:{{email}}">{{email}}</a></td>
+          <td><a href="tel:{{telphone}}">{{telphone}}</a></td>
+          <td>
+            {{#if (eq order_count 0)}}
+              Нет заказов
+            {{else}}
+              {{order_count}} {{pluralize order_count "заказ" "заказа" "заказов"}}
+            {{/if}}
+          </td>
+          <td><span class="status-badge" {{#if (eq role 1)}}value = 1 {{else}} value= 0 {{/if}}>
+            {{#if (eq role 1)}}
+              {{lookupStatusLabel "Администратор"}}
+            {{else}}
+              {{lookupStatusLabel "Пользователь"}}
+            {{/if}}
+            </span></td>
+          <td>
+            <a href="#!" class="btn-flat  delete-user-btn" data-id="{{ID}}">
+              <i class="material-icons">delete</i>
+            </a>
+          </td>
+        </tr>
         {{/each}}
       </tbody>
     </table>
@@ -78,30 +80,156 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     M.AutoInit();
 
     const tooltips = document.querySelectorAll('.tooltipped');
     M.Tooltip.init(tooltips);
 
-    const modal = document.querySelectorAll('.modal');
-    M.Modal.init(modal);
+    const modalEl = document.getElementById('delete-modal');
+    const modal = M.Modal.getInstance(modalEl);
+    const deleteConfirmBtn = document.querySelector('#delete-modal a.waves-red');
 
-    document.querySelectorAll('.filter-item').forEach(item => {
-      item.addEventListener('click', function() {
-        document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
+    let userIdToDelete = null;
 
-    document.querySelectorAll('.btn-flat .material-icons').forEach(btn => {
-      if (btn.textContent === 'delete') {
-        btn.closest('a').addEventListener('click', function(e) {
-          e.preventDefault();
-          const instance = M.Modal.getInstance(document.getElementById('delete-modal'));
-          instance.open();
+    // Фильтрация по роли и поиску
+    const roleFilter = document.getElementById('role-filter');
+    const searchInput = document.getElementById('search');
+    const rows = Array.from(document.querySelectorAll('tbody tr'));
+
+    function applyFilters() {
+        const role = roleFilter.value.toLowerCase();
+        const search = searchInput.value.toLowerCase();
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const userRole = row.querySelector('.status-badge')?.getAttribute('value') || '';
+            const matchRole = !role || userRole === role;
+            const matchSearch = !search || text.includes(search);
+            row.style.display = (matchRole && matchSearch) ? '' : 'none';
         });
-      }
+    }
+
+    roleFilter.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+
+    // Обработчик клика по кнопке "Удалить"
+    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            userIdToDelete = this.dataset.id;
+            modal.open();
+        });
     });
-  });
+
+    // Обработка подтверждения удаления
+    deleteConfirmBtn.addEventListener('click', async function () {
+        if (!userIdToDelete) return;
+
+        const rowToRemove = document.querySelector(`tr:has(a[data-id='${userIdToDelete}'])`);
+
+        try {
+            const response = await fetch('/delete-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: userIdToDelete })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                M.toast({ html: 'Пользователь успешно удалён!', classes: 'green rounded' });
+                if (rowToRemove) rowToRemove.remove();
+                modal.close();
+            } else {
+                alert(result.error || 'Не удалось удалить пользователя');
+            }
+        } catch (err) {
+            console.error('AJAX ошибка:', err);
+            alert('Серверная ошибка при удалении');
+        }
+
+        userIdToDelete = null;
+    });
+});
 </script>
+
+<style>
+  .users-page-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #2c3e50;
+  }
+
+  .filter-search-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .role-filter-wrapper {
+    min-width: 200px;
+  }
+
+  .search-container {
+    flex-grow: 1;
+    max-width: 300px;
+  }
+
+  .search-container .input-field {
+    margin: 0;
+    position: relative;
+  }
+
+  .search-container input {
+    padding-left: 36px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    background-color: #4caf50;
+    color: white;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  .users-table {
+    margin-top: 32px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .users-table table {
+    margin: 0;
+  }
+
+  @media screen and (max-width: 768px) {
+    .filter-search-wrapper {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .page-title {
+      font-size: 22px;
+      text-align: center;
+    }
+  }
+</style>

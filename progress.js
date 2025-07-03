@@ -28,13 +28,45 @@ import { request } from 'http';
 
 const app = express();
 const hbs = exphbs.create({
-  defaultLayout: 'main', 
-  extname: '.hbs',        
+  defaultLayout: 'main',
+  extname: 'hbs',
   helpers: {
-   ...allHelpers,
-   isEqual: (a, b) => a == b,
+    ...allHelpers,
+    isEqual: (a, b) => a == b,
+    lookupStatusLabel: (status) => {
+      switch (status) {
+        case 'active': return 'Активен';
+        case 'inactive': return 'Неактивен';
+        case 'pending': return 'На проверке';
+        default: return status;
+      }
+    },
+    pluralize: (n, one, few, many) => {
+      const mod10 = n % 10, mod100 = n % 100;
+      if (mod10 == 1 && mod100 !== 11) return one;
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+      return many;
+    },
+    json: function(context) {
+      return JSON.stringify(context);
+    },
+    formatDate: function(dateString, format = 'DD.MM.YYYY') {
+      if (!dateString) return '—';
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0'); 
+      const year = date.getFullYear();
+
+      if (format == 'DD.MM.YYYY') {
+        return `${day}.${month}.${year}`;
+      } else if (format === 'YYYY-MM-DD') {
+        return `${year}-${month}-${day}`;
+      } else {
+        return date.toLocaleDateString();
+      }
+    }
   }
-}); // используем хелперы для определение статуса в navbar
+});
 
 const TEMP_FOLDER = path.join(appDir, 'public/temp');
 
@@ -134,6 +166,7 @@ app.post('/', async(req, res) => {
       res.send('ok')
     }
     else{
+      res.send('not ok')
       return res.status(401).send("Invalid credentails");
     }
   } catch(error){
@@ -141,48 +174,54 @@ app.post('/', async(req, res) => {
     res.status(500).send('Internal Server Error');
   }
 })
-// app.get('/user', (req, res) => {
-//   res.render('applications', {
-//     title: 'My requests'
-//   });
-// });
 
 app.get('/applications', async (req, res) => {
-  if (req.session.role !== "User") {
+  if (req.session.role != 0) {
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`);
     return res.redirect('/manager');
   }
 
 
   try {
+    const today = new Date();
+    const todayDate = today.toISOString().slice(0, 10);
     const requests = await db.GetUserRequests(req.session.uid);
-
     res.render('applications', {
       session: req.session,
       role: req.session.role,
       title: 'Мои заявки',
-      requests
+      requests: requests,
+      todayDate: todayDate
     });
   } catch (error) {
     console.error("Ошибка при получении заявок:", error);
     res.status(500).send("Ошибка сервера при получении заявок.");
   }
 });
-
-app.get('/manager', (req, res) => {
-  if(req.session.role!="Admin"){
+app.get('/get-order/:id', async (req,res)=> {
+  const id = req.params.id
+  const request = await db.GetRequestById(id)
+  
+  res.json(request) 
+})
+app.get('/manager', async (req, res) => {
+  if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications');
   } 
+  try {
 
-  try { 
-    //const requests = await db.GetRequests();
-
+    const today = new Date();
+    const todayDate = today.toISOString().slice(0, 10);
+    const requests = await db.GetAllRequest();
+    const summary = await db.GetAllStatuses();
     res.render('all_applic', {
       session: req.session,
       role: req.session.role,
       title: 'My requests',
-      //requests
+      summary: summary,
+      requests: requests,
+      todayDate: todayDate
     });
   } catch (error) { 
     console.error("Ошибка при получении заявок:", error);
@@ -190,45 +229,39 @@ app.get('/manager', (req, res) => {
   }
 });
 
-app.get('/arch', (req, res) => {
-  if(req.session.role!="Admin"){
+app.get('/arch', async (req, res) => {
+  if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications')
   } 
+  const arch = await db.GetArchived();
+  
   res.render('archive', {
-    title: 'Archive'
+    session: req.session,
+    role: req.session.role,
+    title: 'Archive',
+    arch:arch
   });
 });
 
-app.get('/base', (req, res) => {
-  if(req.session.role!="Admin"){
+app.get('/base', async (req, res) => {
+  if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications')
   } 
+  const base = await db.getAllUsersWithStats();
   res.render('base', {
-    title: 'Base of users'
-  });
-});
-
-app.get('/create', (req, res) => {
-  if(req.session.role!="User")
-  {
-    console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
-    return res.redirect('/manager')
-  }
-  res.render('creating', {
-    title: 'Create request'
+    session: req.session,
+    role: req.session.role,
+    title: 'Base of users',
+    base: base
   });
 });
 
 app.post('/create', async (req, res) => {
   try {
-    console.log("req.body:", req.body);
-
     const user_id = req.session.uid;
     const { item_name, count, price, link, desired_date, comment } = req.body;
-
-    //console.log("Вызываю createRequest с:", {user_id, item_name, count, price, link, desired_date, comment});
 
     const result = await db.createRequest({user_id, item_name, count, price, link, desired_date, comment});
 
@@ -244,21 +277,43 @@ app.post('/create', async (req, res) => {
   }
 });
 
-app.get('/edit', async (req, res) => {
-  const { id } = req.query;
-
-  if (!id || isNaN(Number(id))) {
-    return res.status(400).send('Некорректный ID');
+app.post('/order-cancel/:id', async (req, res) => {
+  const orderId = parseInt(req.params.id);
+  if (isNaN(orderId)) {
+    return res.status(400).json({ error: 'Неверный ID' });
   }
 
   try {
-    const request = await db.getRequestById(Number(id));
+    const success = await db.updateStatusById(orderId, { status: 5 });
+    if (success) {
+      return res.json({ success: true, message: 'Заказ отменён' });
+    } else {
+      return res.status(404).json({ error: 'Заказ не найден' });
+    }
+  } catch (err) {
+    console.error('Ошибка при отмене заказа:', err);
+    return res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+
+app.get('/edit', async (req, res) => {
+  if(req.session.role != 0)
+  {
+    console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
+    return res.redirect('/manager')
+  }
+  const { id } = req.query;
+  try {
+    const request = await db.GetRequestById(id);
 
     if (!request) {
       return res.status(404).send('Заявка не найдена');
     }
 
     res.render('editing', {
+      session: req.session,
+      role: req.session.role,
       title: 'Редактирование заявки',
       request: request,
       id: id
@@ -270,9 +325,8 @@ app.get('/edit', async (req, res) => {
   }
 });
 
-app.post('/edit', async (req, res) => {
-    console.log('req.body:', req.body); 
-    const id = req.body.id;
+app.post('/edit/:ID', async (req, res) => {
+    const id = req.params.ID;
     console.log('ID:', id); 
     if (!id || isNaN(Number(id))) {
         return res.status(400).json({ error: 'Неверный ID' });
@@ -283,11 +337,10 @@ app.post('/edit', async (req, res) => {
             item_name: req.body.item_name,
             count: Number(req.body.count),
             price: Number(req.body.price),
-            link: req.body.link,
             desired_date: req.body.desired_date,
             comment: req.body.comment
         };
-
+        console.log(updatedData)
         const success = await db.updateRequestById(Number(id), updatedData);
 
         if (success) {
@@ -301,48 +354,86 @@ app.post('/edit', async (req, res) => {
     }
 });
 
+app.post('/delete-user', async (req, res) => {
+    const id = req.body.id;
 
-
-app.get('/repeat', async (req, res) => { 
-  if (req.session.role !== "User") {
-    console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`);
-    return res.redirect('/manager');
-  }
-
-  const requestId = req.query.id;
-
-  try {
-    const originalRequest = await db.GetRequestById(requestId); 
-    console.log(originalRequest)
-    res.render('repeat', {
-      title: 'Повторная заявка',
-      originalRequest: originalRequest,
-    });
-  } catch (error) {
-    console.error('Ошибка при получении данных заявки:', error);
-    res.status(500).send('Ошибка сервера');
-  }
-});
-app.post('/repeat',  async (req, res) => {
-
-  const user_id = req.session.uid; 
-  const {item_name, price, count, link, desired_date, comment} = req.body;
-  console.log(item_name, price, count, link, desired_date, comment)
-  try{
-     const result = await db.createRequest({user_id, item_name, count, price, link, desired_date, comment});
-
-     if (result.success) {
-      return res.redirect("/applications")
-    } else {
-      return res.status(500).json({ success: false, message: result.message });
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).json({ success: false, error: 'Неверный ID' });
     }
-  }
-  catch(error) {
-    console.error('Ошибка при отпраки повторной заявки:', error);
-    res.status(500).send('Ошибка сервера');
-  }
+
+    try {
+        const success = await db.deleteUsers(Number(id));
+
+        if (success) {
+            return res.json({ success: true, message: 'Пользователь удален' });
+        } else {
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении пользователя:', error);
+        return res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
 });
-app.get('/logout',(req,res)=> {
+
+app.post('/admin-update/:id', async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const { delivery_date, status, comment } = req.body;
+
+    if (!orderId || isNaN(orderId)) {
+        return res.status(400).json({ success: false, message: 'Неверный ID' });
+    }
+
+    try {
+        const updatedOrder = await db.updateOrderById(orderId, {
+            delivery_date,
+            status: parseInt(status),
+            comment
+        });
+
+        if (updatedOrder) {
+            return res.json({ success: true, message: 'Данные заказа обновлены' });
+        } else {
+            return res.status(404).json({ success: false, message: 'Заказ не найден' });
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/archive-update/:id', async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const { status } = req.body;
+
+    // Проверка ID
+    if (!orderId || isNaN(orderId)) {
+        return res.status(400).json({ success: false, error: 'Неверный ID' });
+    }
+
+    // Проверка статуса
+    const parsedStatus = parseInt(status);
+    if (isNaN(parsedStatus)) {
+        return res.status(400).json({ success: false, error: 'Неверный статус' });
+    }
+
+    try {
+        // Вызываем метод из db.mjs
+        const updatedOrder = await db.updateStatusById(orderId, {
+            status: parsedStatus
+        });
+
+        if (updatedOrder) {
+            return res.json({ success: true, message: 'Статус успешно изменён' });
+        } else {
+            return res.status(404).json({ success: false, error: 'Заказ не найден' });
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении заказа:', error);
+        return res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+});
+
+app.post('/logout',(req,res)=> {
   req.session.role = "";
   req.session.uid = undefined;
   req.session.name = "";

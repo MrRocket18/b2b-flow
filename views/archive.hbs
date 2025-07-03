@@ -1,101 +1,125 @@
 {{!-- views/archive.hbs --}}
 
-<div class="archive-container">
+<div class="orders-page-container">
   <div class="header-section">
     <h1 class="page-title">Архив заказов</h1>
-    
-    <div class="filter-section">
-      <div class="filter-item active">
-        <span>Все полученные заказы</span>
+
+    <div class="filter-wrapper">
+      <div class="filter-section">
+        <div class="filter-item active"><span>Все полученные заказы</span></div>
+        <div class="filter-item"><span>За последний месяц</span></div>
+        <div class="filter-item"><span>За последний год</span></div>
       </div>
-      <div class="filter-item">
-        <span>За последний месяц</span>
-      </div>
-      <div class="filter-item">
-        <span>За последний год</span>
+
+      <div class="search-container input-field">
+        <input id="search" type="text" placeholder="Поиск по архиву заказов...">
       </div>
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <div class="orders-table">
-    <table class="highlight">
+  <div class="orders-container card-panel white lighten-1">
+    <table class="highlight responsive-table">
       <thead>
         <tr>
           <th>ID Заказа</th>
+          <th>Дата оформления</th>
           <th>Дата доставки</th>
           <th>Пользователь</th>
           <th>Сумма</th>
-          <th>Товары</th>
+          <th>Товар</th>
           <th>Статус</th>
-          <th>Действия</th>
+          <th></th>
         </tr>
       </thead>
-      <tbody>
-        {{#each archive}}
-          <tr>
-            <td>{{id}}</td>
-            <td>{{delivery_date}}</td>
-            <td>{{user}}</td>
-            <td>{{total}} ₽</td>
-            <td>
-              {{#each items}}
-                <a href="{{this.link}}" class="product-link" target="_blank">{{this.name}}</a>{{#unless @last}}, {{/unless}}
-              {{/each}}
-            </td>
-            <td><span class="status-badge received">Получен</span></td>
-            <td>
-              <a class="btn-flat waves-effect tooltipped modal-trigger"
-                 href="#comment-modal"
-                 data-tooltip="Просмотр"
-                 data-order-id="{{id}}"
-                 data-comment="{{comment}}">
-                <i class="material-icons">visibility</i>
-              </a>
-            </td>
-          </tr>
-        {{/each}}
+      <tbody id="archive-body">
+        {{#each arch}}
+        <tr>
+          <td>{{ID}}</td>
+          <td>{{registration_date}}</td>
+          <td>{{delivery_date}}</td>
+          <td>{{user_fullname}}</td>
+          <td>{{total}} ₽</td>
+          <td>
+            <a href="{{link}}" class="product-link">{{item_name}}</a>
+          </td>
+          <td>
+            <select name="status" class="browser-default">
+              <option value=0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
+              <option value=1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
+              <option value=2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
+              <option value=3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
+              <option value=4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
+              <option value=5 {{#if (isEqual this.status 5)}}selected{{/if}}>Отменен</option>
+            </select>
+          </td>
+          <td>
+            <button type="button" class="btn-flat update-status-btn" data-id="{{ID}}" >
+              <i class="material-icons green-text">check</i>
+            </button>
+          </td>
+        </tr>
+      {{/each}}
       </tbody>
     </table>
   </div>
 </div>
 
-<div id="comment-modal" class="modal">
-  <div class="modal-content">
-    <h4>Комментарий к заказу <span id="modal-order-id"></span></h4>
-    <div class="comment-content">
-      <p>Здесь будет отображаться комментарий к выбранному заказу.</p>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Закрыть</a>
-  </div>
-</div>
-
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     M.AutoInit();
 
-    const tooltips = document.querySelectorAll('.tooltipped');
-    M.Tooltip.init(tooltips, { position: 'top' });
-
-    const modals = document.querySelectorAll('.modal');
-    M.Modal.init(modals);
-
     document.querySelectorAll('.filter-item').forEach(item => {
-      item.addEventListener('click', function() {
+      item.addEventListener('click', function () {
         document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
         this.classList.add('active');
       });
     });
 
-    document.querySelectorAll('.modal-trigger').forEach(trigger => {
-      trigger.addEventListener('click', function () {
-        const orderId = this.getAttribute('data-order-id');
-        const comment = this.getAttribute('data-comment');
-        document.getElementById('modal-order-id').textContent = '#' + orderId;
-        document.querySelector('.comment-content p').textContent = comment || 'Комментарий отсутствует.';
+    // Обработчик клика по кнопке "Сохранить"
+    document.addEventListener('click', async function (e) {
+        const button = e.target.closest('.update-status-btn');
+        if (!button) return;
+
+        const orderId = button.dataset.id;
+        const row = button.closest('tr');
+        const select = row.querySelector('select[name="status"]');
+        const newStatus = select.value;
+
+        try {
+            const response = await fetch(`/archive-update/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                M.toast({ html: 'Статус успешно изменён!', classes: 'green rounded' });
+                row.remove();
+            } else {
+                alert('Ошибка: ' + (result.error || 'Не удалось изменить статус'));
+            }
+        } catch (err) {
+            console.error('AJAX ошибка:', err);
+            alert('Серверная ошибка');
+        }
+    });
+  
+
+    // Поиск
+    const searchInput = document.getElementById('search');
+    const rows = Array.from(document.querySelectorAll('#archive-body tr'));
+
+    searchInput.addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
       });
     });
   });
