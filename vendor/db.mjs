@@ -153,7 +153,7 @@ export async function updateRequestById(id, updatedData) {
 export async function GetArchived() {
   try {
     const [rows] = await pool.query(
-      `SELECT 
+       `SELECT 
         r.ID,
         DATE_FORMAT(r.registration_date, '%d.%m.%Y') AS registration_date,
         DATE_FORMAT(r.delivery_date, '%d.%m.%Y') AS delivery_date,
@@ -163,10 +163,10 @@ export async function GetArchived() {
         r.item_name,
         r.link, 
         r.status
-      FROM Request r
-      JOIN Users u ON r.user_id = u.ID
-      WHERE r.status = 4
-      ORDER BY r.delivery_date DESC`
+        FROM Request r
+        JOIN Users u ON r.user_id = u.ID
+        WHERE r.status IN (4, 5)
+        ORDER BY r.delivery_date DESC`
     );
     return rows;
   } catch (error) {

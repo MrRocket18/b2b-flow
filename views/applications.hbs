@@ -17,7 +17,6 @@
           <option value=2>Ждём поставку</option>
           <option value=3>Готово к получению</option>
           <option value=4>Получен</option>
-          <option value=5>Отменено</option>
         </select>
         <label>Фильтр по статусу</label>
       </div>
@@ -73,7 +72,6 @@
                   {{#if (isEqual this.status 2)}} Ждём поставку {{/if}}
                   {{#if (isEqual this.status 3)}} Готово к получению {{/if}}
                   {{#if (isEqual this.status 4)}} Получен {{/if}}
-                  {{#if (isEqual this.status 5)}} Отменено {{/if}}
                 </span>
               </td>
               <td>{{this.comment}}</td>
