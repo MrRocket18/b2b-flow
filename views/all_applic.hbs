@@ -2,6 +2,18 @@
 <div class="orders-page-container">
   <h1 class="orders-page-title">Все заказы</h1>
 
+  <!-- Дата-фильтр: От/До -->
+  <div class="date-filters row">
+    <div class="input-field col s6 m2 offset-m8">
+      <input type="date" id="date-from">
+      <label for="date-from" class="active">От</label>
+    </div>
+    <div class="input-field col s6 m2">
+      <input type="date" id="date-to">
+      <label for="date-to" class="active">До</label>
+    </div>
+  </div>
+
   <!-- Сводная таблица -->
   <div class="card-panel white lighten-1 summary-container">
     <table class="striped centered highlight summary-table">
@@ -28,7 +40,7 @@
     </table>
   </div>
 
-  <!-- Фильтры -->
+  <!-- Основные фильтры -->
   <div class="row filter-bar">
     <div class="input-field col s6 m6">
       <input type="text" id="search-input" placeholder="Поиск названию, пользователю, дате">
@@ -36,17 +48,18 @@
     <div class="input-field col s6 m6">
       <select id="status-filter">
         <option value="">Все статусы</option>
-        <option value=0>На рассмотрении</option>
-        <option value=1>Закупаем</option>
-        <option value=2>Ждём поставку</option>
-        <option value=3>Готово к получению</option>
-        <option value=4>Получен</option>
+        <option value="0">На рассмотрении</option>
+        <option value="1">Закупаем</option>
+        <option value="2">Ждём поставку</option>
+        <option value="3">Готово к получению</option>
+        <option value="4">Получен</option>
+        <option value="5">Отменено</option>
       </select>
-      <label>Фильтр по статусу</label>
+      <label for="status-filter">Фильтр по статусу</label>
     </div>
   </div>
 
-  <!-- Основная таблица -->
+  <!-- Таблица заказов -->
   <div class="card-panel white lighten-1 orders-container">
     <table class="striped highlight responsive-table" id="orders-table">
       <thead>
@@ -55,19 +68,16 @@
           <th class="sortable" data-sort="count">Кол-во</th>
           <th class="sortable" data-sort="price">Цена</th>
           <th class="sortable" data-sort="desired_date">Желаемая дата</th>
-          <th class="sortable" data-sort="delivery_date">Предполагаемая дата</th>
+          <th class="sortable" data-sort="delivery_date">Предполагаемая</th>
           <th>Пользователь</th>
-          <th data-sort="status">Статус</th>
+          <th class="sortable" data-sort="status">Статус</th>
           <th>Комментарий</th>
           <th></th>
         </tr>
       </thead>
       <tbody id="orders-body">
         {{#each requests}}
-          {{#if (isEqual this.status 4)}}
-          {{else}}
-            {{#if (isEqual this.status 5)}}
-            {{else}}
+          {{#unless (or (isEqual this.status 4) (isEqual this.status 5))}}
             <tr>
               <form class="order-form" data-id="{{this.ID}}">
                 <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
@@ -75,45 +85,43 @@
                 <td data-field="price">{{this.price}}</td>
                 <td data-field="desired_date">{{this.desired_date}}</td>
                 <td class="hide" data-field="registration_date">{{this.registration_date}}</td>
-                <td data-field="delivery_date" required>
+                <td data-field="delivery_date">
                   <input type="date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}" required>
                   <span class="formatted-date">
-                    {{#if this.delivery_date}}
-                      {{this.delivery_date }}
-                    {{else}}
-                      —
-                    {{/if}}
+                    {{#if this.delivery_date}}{{this.delivery_date}}{{else}}—{{/if}}
                   </span>
                 </td>
                 <td data-field="user_fullname">{{this.user_fullname}}</td>
                 <td data-field="status">
                   <select name="status" class="browser-default">
-                    <option value=0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
-                    <option value=1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
-                    <option value=2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
-                    <option value=3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
-                    <option value=4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
-                    <option value=5 {{#if (isEqual this.status 5)}}selected{{/if}}>Отменено</option>
+                    <option value="0" {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
+                    <option value="1" {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
+                    <option value="2" {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
+                    <option value="3" {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
+                    <option value="4" {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
+                    <option value="5" {{#if (isEqual this.status 5)}}selected{{/if}}>Отменено</option>
                   </select>
                 </td>
                 <td data-field="comment">
                   <input type="text" name="comment" maxlength="500" value="{{this.comment}}">
                 </td>
-                <td>
+                <td class="order-actions">
                   <button type="button" class="btn-flat tooltipped save-order-btn" data-tooltip="Сохранить изменения">
                     <i class="material-icons green-text">check</i>
+                  </button>
+                  <button type="button" class="btn-flat tooltipped edit-btn" data-tooltip="Редактировать" data-id="{{this.ID}}">
+                    <i class="material-icons">edit</i>
                   </button>
                 </td>
               </form>
             </tr>
-            {{/if}}
-          {{/if}}
+          {{/unless}}
         {{/each}}
       </tbody>
     </table>
   </div>
 
-  <!-- MODAL -->
+  <!-- MODAL: изменение статуса -->
   <div id="status-modal" class="modal">
     <form method="POST" id="status-form">
       <div class="modal-content">
@@ -127,11 +135,54 @@
             <option value="Готово к получению">Готово к получению</option>
             <option value="Получен">Получен</option>
           </select>
-          <label>Новый статус</label>
+          <label for="new-status-select" class="active">Новый статус</label>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="submit" class="modal-close btn green">Сохранить</button>
+        <button type="submit" class="modal-close btn blue darken-4">Сохранить</button>
+        <a class="modal-close btn-flat">Отмена</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL: редактирование заявки -->
+  <div id="edit-modal" class="modal">
+    <form method="POST" id="edit-form">
+      <div class="modal-content">
+        <h5>Редактировать заявку</h5>
+        <div class="input-field">
+          <input id="edit-item-name" name="item_name" type="text" required>
+          <label for="edit-item-name" class="active">Название</label>
+        </div>
+        <div class="input-field">
+          <input id="edit-count" name="count" type="number" required>
+          <label for="edit-count" class="active">Количество</label>
+        </div>
+        <div class="input-field">
+          <input id="edit-link" name="link" type="text" required>
+          <label for="edit-link" class="active">Ссылка в названии</label>
+        </div>
+        <div class="input-field">
+          <input id="edit-expected-date" name="expected_date" type="date">
+          <label for="edit-expected-date" class="active">Предполагаемая дата</label>
+        </div>
+        <div class="input-field">
+          <select id="edit-status" name="status" required>
+            <option value="На рассмотрении">На рассмотрении</option>
+            <option value="Закупаем">Закупаем</option>
+            <option value="Ждём поставку">Ждём поставку</option>
+            <option value="Готово к получению">Готово к получению</option>
+            <option value="Получен">Получен</option>
+          </select>
+          <label for="edit-status" class="active">Статус</label>
+        </div>
+        <div class="input-field">
+          <input id="edit-comment" name="comment" type="text">
+          <label for="edit-comment" class="active">Комментарий</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="modal-close btn blue darken-4">Сохранить</button>
         <a class="modal-close btn-flat">Отмена</a>
       </div>
     </form>
@@ -140,178 +191,188 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       // --- Инициализация Materialize ---
-      const modalEl = document.querySelector('#status-modal');
-      const modal = M.Modal.init(modalEl);
-      const selects = document.querySelectorAll('select');
-      M.FormSelect.init(selects);
+      const statusModal    = M.Modal.init(document.getElementById('status-modal'));
+      const editModal      = M.Modal.init(document.getElementById('edit-modal'));
+      M.FormSelect.init(document.querySelectorAll('select'));
 
-      // --- Ограничение на минимальную дату ---
-      const deliveryDateInputs = document.querySelectorAll('[name="delivery_date"]');
-      deliveryDateInputs.forEach(input => {
-        const today = new Date();
-        const todayDate = today.toISOString().slice(0, 10);
-        input.setAttribute('min', todayDate);
+      // --- Ограничение на минимальную дату для delivery_date ---
+      document.querySelectorAll('[name="delivery_date"]').forEach(input => {
+        const today = new Date().toISOString().slice(0, 10);
+        input.setAttribute('min', today);
       });
 
-      // --- Модальное окно изменения статуса ---
-      const form = document.getElementById('status-form');
+      // --- Логика модалки изменения статуса ---
+      const statusForm = document.getElementById('status-form');
       document.querySelectorAll('.change-status-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.dataset.id;
           const currentStatus = btn.dataset.status;
-          form.action = `/update-status/${id}`;
+          statusForm.action = `/update-status/${id}`;
           const select = document.getElementById('new-status-select');
-          [...select.options].forEach(opt => {
-            opt.selected = (opt.value === currentStatus);
-          });
+          [...select.options].forEach(opt => opt.selected = (opt.value === currentStatus));
           M.FormSelect.init(select);
-          modal.open();
+          statusModal.open();
         });
       });
 
       // --- Фильтрация и сортировка ---
-      const searchInput = document.getElementById('search-input');
+      const searchInput  = document.getElementById('search-input');
       const statusFilter = document.getElementById('status-filter');
-      let rows = Array.from(document.querySelectorAll('#orders-body tr'));
-      let sortField = null;
-      let sortAsc = true;
+      const dateFrom     = document.getElementById('date-from');
+      const dateTo       = document.getElementById('date-to');
+      let rows           = Array.from(document.querySelectorAll('#orders-body tr'));
+      let sortField      = null;
+      let sortAsc        = true;
 
       function applyFilters() {
-        const term = searchInput?.value.toLowerCase() || '';
+        const term           = searchInput?.value.toLowerCase() || '';
         const selectedStatus = statusFilter?.value || '';
+        const from           = dateFrom?.value;
+        const to             = dateTo?.value;
 
         rows.forEach(row => {
-          const text = row.innerText.toLowerCase();
-          const cell = row.cells[6]?.querySelector('select');
+          // Фильтр по диапазону дат (desired_date)
+          const rowDate = row.querySelector('[data-field="desired_date"]').innerText.trim();
+          if (from && rowDate < from) { row.style.display = 'none'; return; }
+          if (to   && rowDate > to)   { row.style.display = 'none'; return; }
+
+          // Поиск по тексту и статусу
+          const text          = row.innerText.toLowerCase();
+          const statusSelect  = row.querySelector('select[name="status"]');
           const matchesSearch = !term || text.includes(term);
-          const matchesStatus = !selectedStatus || (cell && cell.value === selectedStatus);
+          const matchesStatus= !selectedStatus || (statusSelect && statusSelect.value === selectedStatus);
+          M.FormSelect.init(document.getElementById('edit-status'));
+M.updateTextFields();
+
           row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
         });
       }
 
+      if (searchInput)  searchInput.addEventListener('input', applyFilters);
+      if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+      if (dateFrom)     dateFrom.addEventListener('change', applyFilters);
+      if (dateTo)       dateTo.addEventListener('change', applyFilters);
+
       function sortTable(field) {
         const indexMap = {
-          item_name: 0,
-          count: 1,
-          price: 2,
-          desired_date: 3,
-          delivery_date: 5
+          item_name:     0,
+          count:         1,
+          price:         2,
+          desired_date:  3,
+          delivery_date: 5,
+          status:        6
         };
         const colIndex = indexMap[field];
-        const sortedRows = [...rows].sort((a, b) => {
+        const sorted   = [...rows].sort((a, b) => {
           const aText = (a.cells[colIndex]?.innerText || '').trim();
           const bText = (b.cells[colIndex]?.innerText || '').trim();
-          const aNum = parseFloat(aText.replace(',', '.'));
-          const bNum = parseFloat(bText.replace(',', '.'));
+          const aNum  = parseFloat(aText.replace(',', '.'));
+          const bNum  = parseFloat(bText.replace(',', '.'));
           if (!isNaN(aNum) && !isNaN(bNum)) {
             return sortAsc ? aNum - bNum : bNum - aNum;
           }
           return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
         });
-
         const tbody = document.getElementById('orders-body');
         tbody.innerHTML = '';
-        sortedRows.forEach(row => tbody.appendChild(row));
+        sorted.forEach(r => tbody.appendChild(r));
       }
 
       document.querySelectorAll('.sortable').forEach(th => {
         th.addEventListener('click', () => {
           const field = th.getAttribute('data-sort');
-          sortAsc = sortField === field ? !sortAsc : true;
+          sortAsc = (sortField === field) ? !sortAsc : true;
           sortField = field;
           sortTable(field);
         });
       });
 
-      if (searchInput) searchInput.addEventListener('input', applyFilters);
-      if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+      // --- Сохранение через AJAX ---
+      document.addEventListener('click', async e => {
+        const btn = e.target.closest('.save-order-btn');
+        if (!btn) return;
 
-      // --- Сохранение изменений заказа ---
-      document.addEventListener('click', async function (e) {
-        const button = e.target.closest('.save-order-btn');
-        if (!button) return;
-
-        const row = button.closest('tr');
-        const form = row.querySelector('form.order-form');
-        const orderId = form.dataset.id;
-
-        const deliveryDateInput = row.querySelector('[name="delivery_date"]');
-        const statusSelect = row.querySelector('[name="status"]');
-        const commentInput = row.querySelector('[name="comment"]');
+        const row              = btn.closest('tr');
+        const form             = row.querySelector('form.order-form');
+        const orderId          = form.dataset.id;
+        const deliveryInput    = row.querySelector('[name="delivery_date"]');
+        const statusSelect     = row.querySelector('[name="status"]');
+        const commentInput     = row.querySelector('[name="comment"]');
 
         const data = {
-          delivery_date: deliveryDateInput.value,
-          status: parseInt(statusSelect.value),
-          comment: commentInput.value
+          delivery_date: deliveryInput.value,
+          status:        parseInt(statusSelect.value),
+          comment:       commentInput.value
         };
 
         try {
-          const response = await fetch(`/admin-update/${orderId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
+          const res = await fetch(`/admin-update/${orderId}`, {
+            method:  'POST',
+            headers: {'Content-Type':'application/json'},
+            body:    JSON.stringify(data)
           });
-
-          const result = await response.json();
-
-          if (result.success) {
-            M.toast({ html: 'Изменения успешно сохранены', classes: 'green darken-1 rounded' });
-
-            // --- Форматируем дату как ДД.ММ.ГГ ---
-            const formattedDeliveryDate = data.delivery_date ? formatDate(data.delivery_date, 'DD.MM.YYYY') : '—';
-
-            // --- Обновляем значения в таблице ---
-            row.querySelector('[data-field="delivery_date"] input').value = data.delivery_date || '';
-            if (data.delivery_date){
-              row.querySelector('[data-field="delivery_date"] .formatted-date').textContent = formattedDeliveryDate;
+          const json = await res.json();
+          if (json.success) {
+            M.toast({ html:'Изменения успешно сохранены', classes:'green darken-1 rounded' });
+            // Обновление отображения
+            if (data.delivery_date) {
+              row.querySelector('.formatted-date').textContent = data.delivery_date.split('-').reverse().join('.');
             }
-            row.querySelector('[data-field="status"] select').value = data.status;
-            row.querySelector('[data-field="status"] select').dispatchEvent(new Event('change')); // Обновляем Materialize Select
-            row.querySelector('[data-field="comment"] input').value = data.comment || '';
-
-            // --- ОБНОВЛЯЕМ СПИСОК ROWS ДЛЯ ФИЛЬТРАЦИИ ---
+            statusSelect.dispatchEvent(new Event('change'));
             rows = Array.from(document.querySelectorAll('#orders-body tr'));
-
-            // --- ПОВТОРНО ПРИМЕНЯЕМ ФИЛЬТР ---
             applyFilters();
-
           } else {
-            M.toast({ html: result.message || 'Ошибка при сохранении', classes: 'red darken-1 rounded' });
+            M.toast({ html: json.message||'Ошибка при сохранении', classes:'red darken-1 rounded' });
           }
-
-        } catch (error) {
-          console.error('Ошибка:', error);
-          M.toast({ html: 'Ошибка сети при сохранении', classes: 'red darken-1 rounded' });
+        } catch (err) {
+          console.error(err);
+          M.toast({ html:'Ошибка сети при сохранении', classes:'red darken-1 rounded' });
         }
       });
 
-      // --- Вспомогательная функция для форматирования даты ---
-      function formatDate(dateString, format) {
-        if (!dateString) return '—';
-        const date = new Date(dateString);
-        let day = date.getDate();
-        let month = date.getMonth() + 1;
-        const year = date.getFullYear();
+      // --- Логика модалки редактирования ---
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id   = btn.dataset.id;
+          const row  = btn.closest('tr');
+          const a    = row.querySelector('a');
+          const item = a.innerText.trim();
+          const link = a.href;
+          const cnt  = row.querySelector('[data-field="count"]').innerText.trim();
+          const del  = row.querySelector('input[name="delivery_date"]').value;
+          const stat = row.querySelector('select[name="status"]').value;
+          const com  = row.querySelector('input[name="comment"]').value;
 
-        day = String(day).padStart(2, '0');
-        month = String(month).padStart(2, '0');
+          document.getElementById('edit-item-name').value     = item;
+          document.getElementById('edit-link').value          = link;
+          document.getElementById('edit-count').value         = cnt;
+          document.getElementById('edit-expected-date').value = del;
+          document.getElementById('edit-status').value        = stat;
+          document.getElementById('edit-comment').value       = com;
+          document.getElementById('edit-form').action         = `/edit/${id}`;
 
-        return `${day}.${month}.${year}`;
-      }
+          M.updateTextFields();
+          M.FormSelect.init(document.getElementById('edit-status'));
+          editModal.open();
+        });
+      });
 
-      // --- Вспомогательная функция для отображения статуса ---
-      function getStatusLabel(status) {
-        const labels = {
-          0: 'На рассмотрении',
-          1: 'Закупаем',
-          2: 'Ждём поставку',
-          3: 'Готово к получению',
-          4: 'Получен',
-          5: 'Отменено'
-        };
-        return labels[status] || 'Неизвестный статус';
-      }
     });
   </script>
+</div>
+
+<style>
+  .modal {
+    border-radius: 16px;
+  }
+  /* Блюр заднего фона при открытом модальном окне */
+body:has(.modal.open)::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+}
+
+</style>
