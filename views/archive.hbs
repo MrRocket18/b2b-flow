@@ -4,15 +4,22 @@
   <div class="header-section">
     <h1 class="page-title">Архив заказов</h1>
 
-    <div class="filter-wrapper">
-      <div class="filter-section">
-        <div class="filter-item active"><span>Все полученные заказы</span></div>
-        <div class="filter-item"><span>За последний месяц</span></div>
-        <div class="filter-item"><span>За последний год</span></div>
-      </div>
 
+     
+    <div class="filter-wrapper">
+       
       <div class="search-container input-field">
         <input id="search" type="text" placeholder="Поиск по архиву заказов...">
+      </div>
+      <div class="row" style="margin-bottom: 0; margin-right: 0;">
+        <div class="input-field col s6 m6">
+          <input type="date" id="date-from">
+          <label for="date-from" class="active">От</label>
+        </div>
+        <div class="input-field col s6 m6">
+          <input type="date" id="date-to">
+          <label for="date-to" class="active">До</label>
+        </div>
       </div>
     </div>
   </div>
@@ -123,4 +130,6 @@
       });
     });
   });
+
+  
 </script>
