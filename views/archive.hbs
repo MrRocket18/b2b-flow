@@ -24,6 +24,7 @@
       <thead>
         <tr>
           <th>ID Заказа</th>
+          <th>Дата оформления</th>
           <th>Дата доставки</th>
           <th>Пользователь</th>
           <th>Сумма</th>
@@ -36,6 +37,7 @@
         {{#each arch}}
         <tr>
           <td>{{ID}}</td>
+          <td>{{registration_date}}</td>
           <td>{{delivery_date}}</td>
           <td>{{user_fullname}}</td>
           <td>{{total}} ₽</td>
