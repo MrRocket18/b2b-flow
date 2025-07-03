@@ -16,7 +16,6 @@
           <option value=1>Закупаем</option>
           <option value=2>Ждём поставку</option>
           <option value=3>Готово к получению</option>
-          <option value=4>Получен</option>
         </select>
         <label>Фильтр по статусу</label>
       </div>
@@ -45,6 +44,8 @@
         {{#each requests}}
           {{#if (isEqual this.status 4)}}
           {{else}}
+            {{#if (isEqual this.status 5)}}
+            {{else}}
             <tr data-request='{
               "ID": "{{this.ID}}",
               "item_name": "{{this.item_name}}",
@@ -82,6 +83,7 @@
                 {{/if}}
               </td>
             </tr>
+            {{/if}}
           {{/if}}
         {{/each}}
       </tbody>
