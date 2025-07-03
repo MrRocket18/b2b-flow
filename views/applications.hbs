@@ -17,7 +17,6 @@
           <option value=2>Ждём поставку</option>
           <option value=3>Готово к получению</option>
           <option value=4>Получен</option>
-          <option value=5>Отменено</option>
         </select>
         <label>Фильтр по статусу</label>
       </div>
@@ -73,7 +72,6 @@
                   {{#if (isEqual this.status 2)}} Ждём поставку {{/if}}
                   {{#if (isEqual this.status 3)}} Готово к получению {{/if}}
                   {{#if (isEqual this.status 4)}} Получен {{/if}}
-                  {{#if (isEqual this.status 5)}} Отменено {{/if}}
                 </span>
               </td>
               <td>{{this.comment}}</td>
@@ -187,7 +185,7 @@
               }
           }
       }
-      orderForm.action = '/create';
+      
     }
 
     const createModalTrigger = document.querySelector('a.modal-trigger');
@@ -262,17 +260,21 @@
             })
             .then(response => {
                 if (response.ok) {
-                    const isCreation = url.endsWith('/create');
-                    if (isCreation) {
-                        window.location.href = '/applications?toast=create-success';
-                    } else {
-                        window.location.href = '/applications?toast=edit-success';
-                    }
-                } else {
-                    console.error(`Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа:`, response.statusText);
-                    M.toast({ html: `Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа. Попробуйте позже.`, classes: 'red rounded' });
-                }
-            })
+                  const isCreation = url.endsWith('/create'); 
+                  let redirectUrl = '/applications'; 
+
+                  if (isCreation) {
+                      redirectUrl += '?toast=create-success';
+                  } else {
+                      redirectUrl += '?toast=edit-success';
+                  }
+
+                  window.location.href = redirectUrl; 
+              } else {
+                console.error(`Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа:`, response.statusText);
+                M.toast({ html: `Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа. Попробуйте позже.`, classes: 'red rounded' });
+            }
+        })
             .catch(error => {
                 console.error('Сетевая ошибка:', error);
                 M.toast({ html: 'Ошибка сети. Не удалось выполнить операцию.', classes: 'red rounded' });
@@ -283,7 +285,7 @@
     window.addEventListener('load', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const toastType = urlParams.get('toast');
-
+        console.log(toastType)
         if (toastType === 'create-success') {
             M.toast({ html: 'Новый заказ успешно создан!', classes: 'green rounded' });
         } else if (toastType === 'edit-success') {

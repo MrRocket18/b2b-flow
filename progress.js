@@ -235,6 +235,7 @@ app.get('/arch', async (req, res) => {
     return res.redirect('/applications')
   } 
   const arch = await db.GetArchived();
+  
   res.render('archive', {
     session: req.session,
     role: req.session.role,

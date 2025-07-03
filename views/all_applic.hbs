@@ -41,7 +41,6 @@
         <option value=2>Ждём поставку</option>
         <option value=3>Готово к получению</option>
         <option value=4>Получен</option>
-        <option value=5>Отменено</option>
       </select>
       <label>Фильтр по статусу</label>
     </div>
@@ -67,44 +66,47 @@
         {{#each requests}}
           {{#if (isEqual this.status 4)}}
           {{else}}
-          <tr>
-            <form class="order-form" data-id="{{this.ID}}">
-              <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
-              <td data-field="count">{{this.count}}</td>
-              <td data-field="price">{{this.price}}</td>
-              <td data-field="desired_date">{{this.desired_date}}</td>
-              <td class="hide" data-field="registration_date">{{this.registration_date}}</td>
-              <td data-field="delivery_date">
-                <input type="date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}" required>
-                <span class="formatted-date">
-                  {{#if this.delivery_date}}
-                    {{this.delivery_date }}
-                  {{else}}
-                    —
-                  {{/if}}
-                </span>
-              </td>
-              <td data-field="user_fullname">{{this.user_fullname}}</td>
-              <td data-field="status">
-                <select name="status" class="browser-default">
-                  <option value=0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
-                  <option value=1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
-                  <option value=2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
-                  <option value=3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
-                  <option value=4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
-                  <option value=5 {{#if (isEqual this.status 5)}}selected{{/if}}>Отменено</option>
-                </select>
-              </td>
-              <td data-field="comment">
-                <input type="text" name="comment" maxlength="500" value="{{this.comment}}">
-              </td>
-              <td>
-                <button type="button" class="btn-flat tooltipped save-order-btn" data-tooltip="Сохранить изменения">
-                  <i class="material-icons green-text">check</i>
-                </button>
-              </td>
-            </form>
-          </tr>
+            {{#if (isEqual this.status 5)}}
+            {{else}}
+            <tr>
+              <form class="order-form" data-id="{{this.ID}}">
+                <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
+                <td data-field="count">{{this.count}}</td>
+                <td data-field="price">{{this.price}}</td>
+                <td data-field="desired_date">{{this.desired_date}}</td>
+                <td class="hide" data-field="registration_date">{{this.registration_date}}</td>
+                <td data-field="delivery_date" required>
+                  <input type="date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}" required>
+                  <span class="formatted-date">
+                    {{#if this.delivery_date}}
+                      {{this.delivery_date }}
+                    {{else}}
+                      —
+                    {{/if}}
+                  </span>
+                </td>
+                <td data-field="user_fullname">{{this.user_fullname}}</td>
+                <td data-field="status">
+                  <select name="status" class="browser-default">
+                    <option value=0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
+                    <option value=1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
+                    <option value=2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
+                    <option value=3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
+                    <option value=4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
+                    <option value=5 {{#if (isEqual this.status 5)}}selected{{/if}}>Отменено</option>
+                  </select>
+                </td>
+                <td data-field="comment">
+                  <input type="text" name="comment" maxlength="500" value="{{this.comment}}">
+                </td>
+                <td>
+                  <button type="button" class="btn-flat tooltipped save-order-btn" data-tooltip="Сохранить изменения">
+                    <i class="material-icons green-text">check</i>
+                  </button>
+                </td>
+              </form>
+            </tr>
+            {{/if}}
           {{/if}}
         {{/each}}
       </tbody>
@@ -193,7 +195,7 @@
           count: 1,
           price: 2,
           desired_date: 3,
-          delivery_date: 4
+          delivery_date: 5
         };
         const colIndex = indexMap[field];
         const sortedRows = [...rows].sort((a, b) => {
