@@ -17,7 +17,7 @@ $("#auth-form").on("submit", function (event) {
             }
         })
         .fail (function(error){
-            //showToast("Произошла ошибка авторизации.", "danger");
+            M.toast({ html: 'Неправильный логин или пароль!', classes: 'red rounded' });
             console.error("Ошибка при запросе:", error);
         })
     }

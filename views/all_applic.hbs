@@ -74,7 +74,7 @@
               <td data-field="price">{{this.price}}</td>
               <td data-field="desired_date">{{this.desired_date}}</td>
               <td class="hide" data-field="registration_date">{{this.registration_date}}</td>
-              <td data-field="delivery_date">
+              <td data-field="delivery_date" required>
                 <input type="date" name="delivery_date" value="{{this.delivery_date}}" min="{{todayDate}}" required>
                 <span class="formatted-date">
                   {{#if this.delivery_date}}
@@ -193,7 +193,7 @@
           count: 1,
           price: 2,
           desired_date: 3,
-          delivery_date: 4
+          delivery_date: 5
         };
         const colIndex = indexMap[field];
         const sortedRows = [...rows].sort((a, b) => {
