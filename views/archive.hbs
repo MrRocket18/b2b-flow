@@ -24,6 +24,7 @@
       <thead>
         <tr>
           <th>ID Заказа</th>
+          <th>Дата оформления</th>
           <th>Дата доставки</th>
           <th>Пользователь</th>
           <th>Сумма</th>
@@ -33,6 +34,7 @@
         </tr>
       </thead>
       <tbody id="archive-body">
+<<<<<<< HEAD
         {{#each archive}}
           <tr>
             <form method="POST" action="/archive/update/{{this.id}}">
@@ -62,6 +64,35 @@
             </form>
           </tr>
         {{/each}}
+=======
+        {{#each arch}}
+        <tr>
+          <td>{{ID}}</td>
+          <td>{{registration_date}}</td>
+          <td>{{delivery_date}}</td>
+          <td>{{user_fullname}}</td>
+          <td>{{total}} ₽</td>
+          <td>
+            <a href="{{link}}" class="product-link">{{item_name}}</a>
+          </td>
+          <td>
+            <select name="status" class="browser-default">
+              <option value=0 {{#if (isEqual this.status 0)}}selected{{/if}}>На рассмотрении</option>
+              <option value=1 {{#if (isEqual this.status 1)}}selected{{/if}}>Закупаем</option>
+              <option value=2 {{#if (isEqual this.status 2)}}selected{{/if}}>Ждём поставку</option>
+              <option value=3 {{#if (isEqual this.status 3)}}selected{{/if}}>Готово к получению</option>
+              <option value=4 {{#if (isEqual this.status 4)}}selected{{/if}}>Получен</option>
+              <option value=5 {{#if (isEqual this.status 5)}}selected{{/if}}>Отменен</option>
+            </select>
+          </td>
+          <td>
+            <button type="button" class="btn-flat update-status-btn" data-id="{{ID}}" >
+              <i class="material-icons green-text">check</i>
+            </button>
+          </td>
+        </tr>
+      {{/each}}
+>>>>>>> dev
       </tbody>
     </table>
   </div>
@@ -77,6 +108,40 @@
         this.classList.add('active');
       });
     });
+
+    // Обработчик клика по кнопке "Сохранить"
+    document.addEventListener('click', async function (e) {
+        const button = e.target.closest('.update-status-btn');
+        if (!button) return;
+
+        const orderId = button.dataset.id;
+        const row = button.closest('tr');
+        const select = row.querySelector('select[name="status"]');
+        const newStatus = select.value;
+
+        try {
+            const response = await fetch(`/archive-update/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                M.toast({ html: 'Статус успешно изменён!', classes: 'green rounded' });
+                row.remove();
+            } else {
+                alert('Ошибка: ' + (result.error || 'Не удалось изменить статус'));
+            }
+        } catch (err) {
+            console.error('AJAX ошибка:', err);
+            alert('Серверная ошибка');
+        }
+    });
+  
 
     // Поиск
     const searchInput = document.getElementById('search');

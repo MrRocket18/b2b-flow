@@ -13,11 +13,18 @@
       <div class="input-field status-select-wrapper">
         <select id="status-filter">
           <option value="">Все статусы</option>
+<<<<<<< HEAD
           <option value="На рассмотрении">На рассмотрении</option>
           <option value="Закупаем">Закупаем</option>
           <option value="Ждём поставку">Ждём поставку</option>
           <option value="Готово к получению">Готово к получению</option>
           <option value="Получен">Получен</option>
+=======
+          <option value=0>На рассмотрении</option>
+          <option value=1>Закупаем</option>
+          <option value=2>Ждём поставку</option>
+          <option value=3>Готово к получению</option>
+>>>>>>> dev
         </select>
         <label>Фильтр по статусу</label>
       </div>
@@ -48,14 +55,15 @@
           <th class="sortable" data-sort="count">Кол-во</th>
           <th class="sortable" data-sort="price">Цена</th>
           <th class="sortable" data-sort="desired_date">Желаемая дата</th>
-          <th class="sortable" data-sort="estimated_delivery">Ожидаемая доставка</th>
-          <th class="sortable" data-sort="status">Статус</th>
+          <th class="sortable" data-sort="delivery_date">Ожидаемая доставка</th>
+          <th>Статус</th>
           <th>Комментарий</th>
           <th>Действия</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="orders-body">
         {{#each requests}}
+<<<<<<< HEAD
         <tr data-request='{{json this}}'>
           <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
           <td>{{this.count}}</td>
@@ -77,6 +85,51 @@
             </a>
           </td>
         </tr>
+=======
+          {{#if (isEqual this.status 4)}}
+          {{else}}
+            {{#if (isEqual this.status 5)}}
+            {{else}}
+            <tr data-request='{
+              "ID": "{{this.ID}}",
+              "item_name": "{{this.item_name}}",
+              "count": "{{this.count}}",
+              "price": "{{this.price}}",
+              "desired_date": "{{this.desired_date}}",
+              "delivery_date": "{{this.delivery_date}}",
+              "comment": "{{this.comment}}",
+              "status": "{{this.status}}",
+              "link": "{{this.link}}"
+            }'>
+              <td><a href="{{this.link}}" target="_blank">{{this.item_name}}</a></td>
+              <td>{{this.count}}</td>
+              <td>{{this.price}}</td>
+              <td>{{this.desired_date}}</td>
+              <td>{{#if this.delivery_date}}
+                    {{this.delivery_date }}
+                  {{else}}
+                    —
+                  {{/if}}</td>
+              <td>
+                <span value="{{this.status}}" class="status-badge">
+                  {{#if (isEqual this.status 0)}} На рассмотрении {{/if}}
+                  {{#if (isEqual this.status 1)}} Закупаем {{/if}}
+                  {{#if (isEqual this.status 2)}} Ждём поставку {{/if}}
+                  {{#if (isEqual this.status 3)}} Готово к получению {{/if}}
+                  {{#if (isEqual this.status 4)}} Получен {{/if}}
+                </span>
+              </td>
+              <td>{{this.comment}}</td>
+              <td>
+                {{#if (eq this.status 0)}}
+                  <button class="btn-flat edit-btn" data-id="{{ID}}"><i class="material-icons">edit</i></button>
+                  <button class="btn-flat cancel-btn" data-id="{{ID}}"><i class="material-icons">cancel</i></button>
+                {{/if}}
+              </td>
+            </tr>
+            {{/if}}
+          {{/if}}
+>>>>>>> dev
         {{/each}}
       </tbody>
     </table>
@@ -89,27 +142,27 @@
     <div class="modal-content">
       <h5 id="modal-title">Новый заказ</h5>
       <div class="input-field">
-        <input name="item_name" id="item_name" type="text" required>
+        <input name="item_name" id="item_name" type="text" maxlength="50" required>
         <label for="item_name">Название товара</label>
       </div>
       <div class="input-field">
-        <input name="link" id="link" type="url">
+        <input name="link" id="link" type="url" maxlength="1000">
         <label for="link">Ссылка на товар</label>
       </div>
       <div class="input-field">
-        <input name="count" id="count" type="number" min="1" required>
+        <input name="count" id="count" type="number"  min="1"  max = "9999999999999999999999999999999999999999" required>
         <label for="count">Количество</label>
       </div>
       <div class="input-field">
-        <input name="price" id="price" type="number" step="0.01" required>
+        <input name="price" id="price" type="number"  min="1" max = "9999999999999999999999999999999999999999" step="0.01" required>
         <label for="price">Цена</label>
       </div>
       <div class="input-field">
-        <input name="desired_date" id="desired_date" type="date" required>
+        <input name="desired_date" id="desired_date" type="date" min="{{todayDate}}" required>
         <label for="desired_date">Желаемая дата</label>
       </div>
       <div class="input-field">
-        <textarea name="comment" id="comment" class="materialize-textarea"></textarea>
+        <textarea name="comment" id="comment" class="materialize-textarea" maxlength="500" > </textarea>
         <label for="comment">Комментарий</label>
       </div>
     </div>
@@ -120,9 +173,22 @@
   </form>
 </div>
 
+<!-- Модальное окно подтверждения отмены -->
+<div id="cancelOrderModal" class="modal">
+  <div class="modal-content">
+    <h4>Подтверждение отмены</h4>
+    <p>Вы уверены, что хотите отменить этот заказ?</p>
+  </div>
+  <div class="modal-footer">
+    <button class="modal-close waves-effect waves-green btn-flat" id="cancelModalClose">Отмена</button>
+    <button class="modal-close waves-effect waves-red btn-flat" id="confirmCancelButton">Подтвердить</button>
+  </div>
+</div>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', function() {
     M.AutoInit();
+<<<<<<< HEAD
 
     const modalInstance = M.Modal.getInstance(document.getElementById('create-modal'));
     const form = document.getElementById('order-form');
@@ -155,9 +221,18 @@
       document.getElementById('comment').value = data.comment || '';
       document.getElementById('link').value = data.link || '';
       M.updateTextFields();
+=======
+    const modalElement = document.getElementById('create-modal');
+    let modalInstance = M.Modal.getInstance(modalElement);
+    if (!modalInstance) {
+        modalInstance = M.Modal.init(modalElement, {});
+>>>>>>> dev
     }
 
+    const orderForm = document.getElementById('order-form');
+
     function clearForm() {
+<<<<<<< HEAD
       ['item_name', 'count', 'price', 'desired_date', 'comment', 'link'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
@@ -166,9 +241,240 @@
     }
 
     // Фильтрация
+=======
+      const inputs = orderForm.querySelectorAll('input, textarea');
+      inputs.forEach(input => {
+        input.value = '';
+        if (input.classList.contains('valid') || input.classList.contains('invalid')) {
+          const parent = input.closest('.input-field');
+          if (parent) {
+            const label = parent.querySelector('label[for="' + input.id + '"]');
+            if (label) {
+                label.classList.remove('active');
+            }
+            input.classList.remove('valid', 'invalid');
+            const errorHelper = parent.querySelector('.helper-text');
+            if (errorHelper) {
+                errorHelper.textContent = '';
+            }
+          }
+        }
+      });
+
+      const dateInput = document.getElementById('desired_date');
+      if (dateInput) {
+          const datepickerInstance = M.Datepicker.getInstance(dateInput);
+          if (datepickerInstance) {
+              datepickerInstance.setDate(null);
+          }
+          const today = new Date();
+          const formattedToday = today.toISOString().split('T')[0];
+          dateInput.setAttribute('min', formattedToday);
+          if (dateInput.classList.contains('initialized')) {
+              const pickerInstance = M.Datepicker.getInstance(dateInput);
+              if (pickerInstance) {
+                  pickerInstance.options.minDate = today;
+              }
+          }
+      }
+      
+    }
+
+    const createModalTrigger = document.querySelector('a.modal-trigger');
+    if (createModalTrigger) {
+        createModalTrigger.addEventListener('click', (event) => {
+            document.getElementById('modal-title').textContent = 'Новый заказ';
+            orderForm.action = '/create';
+            clearForm();
+        });
+    }
+
+    const editButtons = document.querySelectorAll('.edit-btn');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            const orderId = this.getAttribute('data-id');
+
+            document.getElementById('modal-title').textContent = 'Редактировать заказ';
+            orderForm.action = `/edit/${orderId}`;
+
+            clearForm();
+
+            fetch(`/get-order/${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('item_name').value = data.item_name || '';
+                    document.getElementById('link').value = data.link || '';
+                    document.getElementById('count').value = data.count || '';
+                    document.getElementById('price').value = data.price || '';
+                    if (data.desired_date) {
+                      let desiredDateValue;
+                      if (data.desired_date.includes('.')) {
+                        const [day, month, year] = data.desired_date.split('.');
+                        if (day && month && year) {
+                          desiredDateValue = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        }
+                      } else {
+                        desiredDateValue = data.desired_date;
+                      }
+
+                      document.getElementById('desired_date').value = desiredDateValue || '';
+                    }
+                    document.getElementById('comment').value = data.comment || '';
+                    M.updateTextFields();
+                    modalInstance.open();
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке данных для редактирования:', error);
+                    M.toast({ html: 'Не удалось загрузить данные для редактирования.', classes: 'red rounded' });
+                });
+        });
+    });
+    
+    if (orderForm) {
+      orderForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(orderForm);
+            const method = orderForm.getAttribute('method') || 'POST';
+            const url = orderForm.action;
+
+            fetch(url, {
+                method: method,
+                body: formData,
+            })
+            .then(response => {
+                if (response.ok) {
+                  const isCreation = url.endsWith('/create'); 
+                  let redirectUrl = '/applications'; 
+
+                  if (isCreation) {
+                      redirectUrl += '?toast=create-success';
+                  } else {
+                      redirectUrl += '?toast=edit-success';
+                  }
+
+                  window.location.href = redirectUrl; 
+              } else {
+                console.error(`Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа:`, response.statusText);
+                M.toast({ html: `Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа. Попробуйте позже.`, classes: 'red rounded' });
+            }
+        })
+            .catch(error => {
+                console.error('Сетевая ошибка:', error);
+                M.toast({ html: 'Ошибка сети. Не удалось выполнить операцию.', classes: 'red rounded' });
+            });
+        });
+    }
+
+    window.addEventListener('load', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const toastType = urlParams.get('toast');
+        console.log(toastType)
+        if (toastType === 'create-success') {
+            M.toast({ html: 'Новый заказ успешно создан!', classes: 'green rounded' });
+        } else if (toastType === 'edit-success') {
+            M.toast({ html: 'Заказ успешно отредактирован!', classes: 'green rounded' });
+        } else if (toastType === 'error') {
+            M.toast({ html: 'Произошла ошибка при выполнении операции с заказом.', classes: 'red rounded' });
+        }
+    });
+
+
+    document.addEventListener('click', async function (e) {
+      const cancelButton = e.target.closest('.btn-flat.cancel-btn');
+
+      if (cancelButton) {
+        const orderId = cancelButton.dataset.id;
+
+      
+        const cancelOrderModal = document.getElementById('cancelOrderModal');
+        const modalInstance = M.Modal.init(cancelOrderModal);
+        modalInstance.open();
+
+        
+        const confirmationPromise = new Promise((resolve) => {
+          
+        const confirmButton = document.getElementById('confirmCancelButton');
+        const cancelButtonClose = document.getElementById('cancelModalClose');
+          
+        confirmButton.onclick = () => {
+            resolve(true); 
+            modalInstance.close(); 
+          };
+
+        cancelButtonClose.onclick = () => {
+            resolve(false); 
+            modalInstance.close(); 
+          };
+        });
+
+        const confirmed = await confirmationPromise;
+        
+        if (confirmed) {
+          try {
+            const response = await fetch(`/order-cancel/${orderId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({})
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+              const row = cancelButton.closest('tr');
+              if (row) {
+              
+                const statusSpan = row.querySelector('td:nth-child(6) > span');
+                if (statusSpan) {
+                  statusSpan.textContent = 'Отменено'; 
+                  statusSpan.setAttribute('value', 5); 
+                }
+
+                const buttonCell = row.querySelector('td:last-child'); 
+                if (buttonCell) {
+                  buttonCell.innerHTML = '';
+                }
+
+                M.toast({ html: 'Заказ успешно отменен!', classes: 'green rounded' });
+              } else {
+                console.error('Не удалось найти строку таблицы для обновления.');
+                M.toast({ html: 'Не удалось отменить заказ!', classes: 'red rounded' });
+              }
+            } else {
+              alert('Ошибка: ' + (result.error || 'Не удалось отменить заказ'));
+            }
+          } catch (err) {
+            console.error('AJAX ошибка:', err);
+            alert('Серверная ошибка');
+          }
+        } else {
+          M.toast({ html: 'Действие отменено.', classes: 'yellow rounded' });
+        }
+      }
+    });   
+
+
+    // --- Фильтрация по статусу и поиску ---
+>>>>>>> dev
     const searchInput = document.getElementById('search');
     const statusFilter = document.getElementById('status-filter');
-    const rows = Array.from(document.querySelectorAll('tbody tr'));
+    const rows = Array.from(document.querySelectorAll('#orders-body tr'));
+    let sortField = null;
+    let sortAsc = true;
 
     function applyFilters() {
       const search = searchInput.value.toLowerCase();
@@ -181,6 +487,40 @@
         const matchesStatus = !selectedStatus || status === selectedStatus;
         row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
       });
+    }
+
+    document.querySelectorAll('.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          sortAsc = sortField === field ? !sortAsc : true;
+          sortField = field;
+          sortTable(field);
+        });
+    });
+    
+    function sortTable(field) {
+        const indexMap = {
+          item_name: 0,
+          count: 1,
+          price: 2,
+          desired_date: 3,
+          delivery_date: 4
+        };
+        const colIndex = indexMap[field];
+        const sortedRows = [...rows].sort((a, b) => {
+          const aText = (a.cells[colIndex]?.innerText || '').trim();
+          const bText = (b.cells[colIndex]?.innerText || '').trim();
+          const aNum = parseFloat(aText.replace(',', '.'));
+          const bNum = parseFloat(bText.replace(',', '.'));
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            return sortAsc ? aNum - bNum : bNum - aNum;
+          }
+          return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+        });
+
+        const tbody = document.getElementById('orders-body');
+        tbody.innerHTML = '';
+        sortedRows.forEach(row => tbody.appendChild(row));
     }
 
     searchInput.addEventListener('input', applyFilters);

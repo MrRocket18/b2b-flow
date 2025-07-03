@@ -32,7 +32,7 @@ const hbs = exphbs.create({
   extname: 'hbs',
   helpers: {
     ...allHelpers,
-    isEqual: (a, b) => a === b,
+    isEqual: (a, b) => a == b,
     lookupStatusLabel: (status) => {
       switch (status) {
         case 'active': return 'Активен';
@@ -43,12 +43,27 @@ const hbs = exphbs.create({
     },
     pluralize: (n, one, few, many) => {
       const mod10 = n % 10, mod100 = n % 100;
-      if (mod10 === 1 && mod100 !== 11) return one;
+      if (mod10 == 1 && mod100 !== 11) return one;
       if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
       return many;
     },
     json: function(context) {
       return JSON.stringify(context);
+    },
+    formatDate: function(dateString, format = 'DD.MM.YYYY') {
+      if (!dateString) return '—';
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0'); 
+      const year = date.getFullYear();
+
+      if (format == 'DD.MM.YYYY') {
+        return `${day}.${month}.${year}`;
+      } else if (format === 'YYYY-MM-DD') {
+        return `${year}-${month}-${day}`;
+      } else {
+        return date.toLocaleDateString();
+      }
     }
   }
 });
@@ -151,6 +166,7 @@ app.post('/', async(req, res) => {
       res.send('ok')
     }
     else{
+      res.send('not ok')
       return res.status(401).send("Invalid credentails");
     }
   } catch(error){
@@ -158,11 +174,6 @@ app.post('/', async(req, res) => {
     res.status(500).send('Internal Server Error');
   }
 })
-// app.get('/user', (req, res) => {
-//   res.render('applications', {
-//     title: 'My requests'
-//   });
-// });
 
 app.get('/applications', async (req, res) => {
   if (req.session.role != 0) {
@@ -172,31 +183,45 @@ app.get('/applications', async (req, res) => {
 
 
   try {
+    const today = new Date();
+    const todayDate = today.toISOString().slice(0, 10);
     const requests = await db.GetUserRequests(req.session.uid);
     res.render('applications', {
       session: req.session,
       role: req.session.role,
       title: 'Мои заявки',
-      requests
+      requests: requests,
+      todayDate: todayDate
     });
   } catch (error) {
     console.error("Ошибка при получении заявок:", error);
     res.status(500).send("Ошибка сервера при получении заявок.");
   }
 });
-
+app.get('/get-order/:id', async (req,res)=> {
+  const id = req.params.id
+  const request = await db.GetRequestById(id)
+  
+  res.json(request) 
+})
 app.get('/manager', async (req, res) => {
   if(req.session.role != 1){
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications');
   } 
-  try { 
+  try {
+
+    const today = new Date();
+    const todayDate = today.toISOString().slice(0, 10);
     const requests = await db.GetAllRequest();
+    const summary = await db.GetAllStatuses();
     res.render('all_applic', {
       session: req.session,
       role: req.session.role,
       title: 'My requests',
-      requests
+      summary: summary,
+      requests: requests,
+      todayDate: todayDate
     });
   } catch (error) { 
     console.error("Ошибка при получении заявок:", error);
@@ -210,6 +235,7 @@ app.get('/arch', async (req, res) => {
     return res.redirect('/applications')
   } 
   const arch = await db.GetArchived();
+  
   res.render('archive', {
     session: req.session,
     role: req.session.role,
@@ -232,23 +258,8 @@ app.get('/base', async (req, res) => {
   });
 });
 
-app.get('/create', (req, res) => {
-  if(req.session.role != 0)
-  {
-    console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
-    return res.redirect('/manager')
-  }
-  res.render('creating', {
-    session: req.session,
-    role: req.session.role,
-    title: 'Create request'
-  });
-});
-
 app.post('/create', async (req, res) => {
   try {
-    console.log("req.body:", req.body);
-
     const user_id = req.session.uid;
     const { item_name, count, price, link, desired_date, comment } = req.body;
 
@@ -265,6 +276,26 @@ app.post('/create', async (req, res) => {
     return res.status(500).send("Произошла внутренняя ошибка сервера");
   }
 });
+
+app.post('/order-cancel/:id', async (req, res) => {
+  const orderId = parseInt(req.params.id);
+  if (isNaN(orderId)) {
+    return res.status(400).json({ error: 'Неверный ID' });
+  }
+
+  try {
+    const success = await db.updateStatusById(orderId, { status: 5 });
+    if (success) {
+      return res.json({ success: true, message: 'Заказ отменён' });
+    } else {
+      return res.status(404).json({ error: 'Заказ не найден' });
+    }
+  } catch (err) {
+    console.error('Ошибка при отмене заказа:', err);
+    return res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
 
 app.get('/edit', async (req, res) => {
   if(req.session.role != 0)
@@ -323,92 +354,82 @@ app.post('/edit/:ID', async (req, res) => {
     }
 });
 
-app.post('/delete', async (req, res) => {
-    const id = req.body.ID;
-    console.log(id)
-    if (!id || isNaN(Number(id))) {
-        return res.status(400).send('Неверный ID');
-    }
-
-    try {
-        const success = await db.deleteRequestById(Number(id));
-
-        if (success) {
-            return res.redirect('/applications'); 
-        }
-    } catch (error) {
-        console.error('Ошибка при удалении заявки:', error);
-        return res.status(500).send('Ошибка сервера');
-    }
-});
-
 app.post('/delete-user', async (req, res) => {
     const id = req.body.id;
 
     if (!id || isNaN(Number(id))) {
-        return res.status(400).send('Неверный ID');
+        return res.status(400).json({ success: false, error: 'Неверный ID' });
     }
 
     try {
         const success = await db.deleteUsers(Number(id));
 
         if (success) {
-            return res.redirect('/base'); 
+            return res.json({ success: true, message: 'Пользователь удален' });
         } else {
-            return res.status(404).send('Пользователь не найден');
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
         }
     } catch (error) {
         console.error('Ошибка при удалении пользователя:', error);
-        return res.status(500).send('Ошибка сервера');
+        return res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
 
-app.post('/admin/update/:id', async (req, res) => {
+app.post('/admin-update/:id', async (req, res) => {
     const orderId = parseInt(req.params.id);
     const { delivery_date, status, comment } = req.body;
+
     if (!orderId || isNaN(orderId)) {
-        return res.status(400).send('Неверный ID');
+        return res.status(400).json({ success: false, message: 'Неверный ID' });
     }
-     console.log(delivery_date)
+
     try {
-        const success = await db.updateOrderById(orderId, {
+        const updatedOrder = await db.updateOrderById(orderId, {
             delivery_date,
             status: parseInt(status),
             comment
         });
-  
-        if (success) {
-            return res.redirect('/manager'); // или '/applications'
+
+        if (updatedOrder) {
+            return res.json({ success: true, message: 'Данные заказа обновлены' });
         } else {
-            return res.status(404).send('Заказ не найден');
+            return res.status(404).json({ success: false, message: 'Заказ не найден' });
         }
     } catch (error) {
-        console.error('Ошибка при обновлении заказа:', error);
-        return res.status(500).send('Ошибка сервера');
+        console.error('Ошибка:', error);
+        return res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });
 
-app.post('/archive/update/:id', async (req, res) => {
+app.post('/archive-update/:id', async (req, res) => {
     const orderId = parseInt(req.params.id);
-    const {status} = req.body;
+    const { status } = req.body;
+
+    // Проверка ID
     if (!orderId || isNaN(orderId)) {
-        return res.status(400).send('Неверный ID');
+        return res.status(400).json({ success: false, error: 'Неверный ID' });
+    }
+
+    // Проверка статуса
+    const parsedStatus = parseInt(status);
+    if (isNaN(parsedStatus)) {
+        return res.status(400).json({ success: false, error: 'Неверный статус' });
     }
 
     try {
         // Вызываем метод из db.mjs
-        const success = await db.updateStatusById(orderId, {
-            status: parseInt(status)
+        const updatedOrder = await db.updateStatusById(orderId, {
+            status: parsedStatus
         });
 
-        if (success) {
-            return res.redirect('/arch'); 
+        if (updatedOrder) {
+            return res.json({ success: true, message: 'Статус успешно изменён' });
         } else {
-            return res.status(404).send('Заказ не найден');
+            return res.status(404).json({ success: false, error: 'Заказ не найден' });
         }
     } catch (error) {
         console.error('Ошибка при обновлении заказа:', error);
-        return res.status(500).send('Ошибка сервера');
+        return res.status(500).json({ success: false, error: 'Ошибка сервера' });
     }
 });
 

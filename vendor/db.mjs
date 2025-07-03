@@ -66,18 +66,16 @@ export async function get_roles(ID) {
 }
 
 export async function createRequest(orderData) {
-
     try {
         const { user_id, item_name, count, price, link, desired_date, comment } = orderData;
-        console.log(user_id, item_name, count, price, link, desired_date, comment)
-        const formattedDate = formatDate(desired_date);
         const parsedCount = parseInt(count, 10);
         const parsedPrice = parseFloat(price);
-        const status = 'На рассмотрении';
 
         const [result] = await pool.query(
-            'INSERT INTO Request (user_id, item_name, count, price, link, desired_date, status, comment) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [user_id, item_name, parsedCount, parsedPrice, link, formattedDate, status, comment || '']
+            `INSERT INTO Request 
+            (user_id, item_name, count, price, link, desired_date, comment, registration_date) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+            [user_id, item_name, parsedCount, parsedPrice, link, desired_date, comment || '']
         );
 
         return { success: true, insertId: result.insertId };
@@ -152,24 +150,12 @@ export async function updateRequestById(id, updatedData) {
     }
 }
 
-export async function deleteRequestById(id) {
-    try {
-        const [result] = await pool.execute(
-            'DELETE FROM Request WHERE id = ?', [id]
-        );
-
-        return result.affectedRows > 0;
-    } catch (error) {
-        console.error('Ошибка при удалении заявки из БД:', error);
-        throw error;
-    }
-}
-
 export async function GetArchived() {
   try {
     const [rows] = await pool.query(
-      `SELECT 
+       `SELECT 
         r.ID,
+        DATE_FORMAT(r.registration_date, '%d.%m.%Y') AS registration_date,
         DATE_FORMAT(r.delivery_date, '%d.%m.%Y') AS delivery_date,
         r.comment,
         CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
@@ -177,10 +163,10 @@ export async function GetArchived() {
         r.item_name,
         r.link, 
         r.status
-      FROM Request r
-      JOIN Users u ON r.user_id = u.ID
-      WHERE r.status = 4
-      ORDER BY r.delivery_date DESC`
+        FROM Request r
+        JOIN Users u ON r.user_id = u.ID
+        WHERE r.status IN (4, 5)
+        ORDER BY r.delivery_date DESC`
     );
     return rows;
   } catch (error) {
@@ -226,6 +212,7 @@ export async function GetAllRequest() {
       `SELECT 
         r.ID,
         r.user_id,
+        DATE_FORMAT(r.registration_date, '%d.%m.%Y') AS registration_date,
         CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
         r.item_name,
         r.count,
@@ -281,7 +268,7 @@ export async function updateOrderById(id, { delivery_date, status, comment }) {
     }
 }
 
-export async function updateStatusById(id, {status}) {
+export async function updateStatusById(id, { status }) {
     const updateQuery = `
         UPDATE Request SET 
           status = ?
@@ -302,4 +289,22 @@ export async function updateStatusById(id, {status}) {
     } catch (err) {
         throw err;
     }
+}
+
+export async function GetAllStatuses() {
+  try {
+    const [rows] = await pool.query(
+      `SELECT
+    COUNT(IF(status = 0, 1, NULL)) AS new,
+    COUNT(IF(status BETWEEN 1 AND 3, 1, NULL)) AS processing,
+    COUNT(IF(status = 4, 1, NULL)) AS completed,
+    COUNT(IF(status = 5, 1, NULL)) AS cancelled,
+    COUNT(*) AS total
+    FROM Request`
+    );
+    return rows;
+  } catch (error) {
+    console.error('Ошибка при получении данных о товаре по ID:', error);
+    throw error; 
+  }
 }

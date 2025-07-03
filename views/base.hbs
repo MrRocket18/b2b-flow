@@ -8,8 +8,8 @@
       <div class="input-field role-filter-wrapper">
         <select id="role-filter">
           <option value="">Все роли</option>
-          <option value="admin">Администраторы</option>
-          <option value="user">Пользователи</option>
+          <option value= 1>Администраторы</option>
+          <option value= 0>Пользователи</option>
         </select>
         <label>Фильтр по роли</label>
       </div>
@@ -43,13 +43,13 @@
           <td><a href="mailto:{{email}}">{{email}}</a></td>
           <td><a href="tel:{{telphone}}">{{telphone}}</a></td>
           <td>
-            {{#if (eq orders 0)}}
+            {{#if (eq order_count 0)}}
               Нет заказов
             {{else}}
-              {{orders}} {{pluralize orders "заказ" "заказа" "заказов"}}
+              {{order_count}} {{pluralize order_count "заказ" "заказа" "заказов"}}
             {{/if}}
           </td>
-          <td><span class="status-badge {{role}}">
+          <td><span class="status-badge" {{#if (eq role 1)}}value = 1 {{else}} value= 0 {{/if}}>
             {{#if (eq role 1)}}
               {{lookupStatusLabel "Администратор"}}
             {{else}}
@@ -57,7 +57,7 @@
             {{/if}}
             </span></td>
           <td>
-            <a class="btn-flat waves-effect tooltipped" data-tooltip="Удалить" data-position="top" data-id="{{ID}}">
+            <a href="#!" class="btn-flat  delete-user-btn" data-id="{{ID}}">
               <i class="material-icons">delete</i>
             </a>
           </td>
@@ -80,80 +80,79 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-  M.AutoInit();
+document.addEventListener('DOMContentLoaded', function () {
+    M.AutoInit();
 
-  const tooltips = document.querySelectorAll('.tooltipped');
-  M.Tooltip.init(tooltips);
+    const tooltips = document.querySelectorAll('.tooltipped');
+    M.Tooltip.init(tooltips);
 
-  const modal = document.querySelectorAll('.modal');
-  M.Modal.init(modal);
-    // Фильтр по роли
+    const modalEl = document.getElementById('delete-modal');
+    const modal = M.Modal.getInstance(modalEl);
+    const deleteConfirmBtn = document.querySelector('#delete-modal a.waves-red');
+
+    let userIdToDelete = null;
+
+    // Фильтрация по роли и поиску
     const roleFilter = document.getElementById('role-filter');
     const searchInput = document.getElementById('search');
     const rows = Array.from(document.querySelectorAll('tbody tr'));
 
     function applyFilters() {
-      const role = roleFilter.value.toLowerCase();
-      const search = searchInput.value.toLowerCase();
+        const role = roleFilter.value.toLowerCase();
+        const search = searchInput.value.toLowerCase();
 
-      rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        const userRole = row.querySelector('.status-badge')?.textContent.toLowerCase() || '';
-        const matchRole = !role || userRole === role;
-        const matchSearch = !search || text.includes(search);
-        row.style.display = (matchRole && matchSearch) ? '' : 'none';
-      });
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const userRole = row.querySelector('.status-badge')?.getAttribute('value') || '';
+            const matchRole = !role || userRole === role;
+            const matchSearch = !search || text.includes(search);
+            row.style.display = (matchRole && matchSearch) ? '' : 'none';
+        });
     }
 
     roleFilter.addEventListener('change', applyFilters);
     searchInput.addEventListener('input', applyFilters);
-  // Открытие модального окна + сохранение ID пользователя
-  let userIdToDelete = null;
 
-  document.querySelectorAll('.btn-flat .material-icons').forEach(btn => {
-    if (btn.textContent.trim() === 'delete') {
-      const link = btn.closest('a');
-      const userId = link.dataset.id;
+    // Обработчик клика по кнопке "Удалить"
+    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            userIdToDelete = this.dataset.id;
+            modal.open();
+        });
+    });
 
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        userIdToDelete = userId;
+    // Обработка подтверждения удаления
+    deleteConfirmBtn.addEventListener('click', async function () {
+        if (!userIdToDelete) return;
 
-        const instance = M.Modal.getInstance(document.getElementById('delete-modal'));
-        instance.open();
-      });
-    }
-  });
+        const rowToRemove = document.querySelector(`tr:has(a[data-id='${userIdToDelete}'])`);
 
-  // Обработка клика по кнопке "Удалить"
-  document.querySelector('#delete-modal a.waves-red').addEventListener('click', async function () {
-    if (!userIdToDelete) return;
+        try {
+            const response = await fetch('/delete-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: userIdToDelete })
+            });
 
-    try {
-      const response = await fetch('/delete-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ id: userIdToDelete })
-      });
+            const result = await response.json();
 
-      if (response.redirected) {
-        window.location.href = response.url; // Перенаправление после успешного удаления
-      } else {
-        const result = await response.text();
-        if (result === 'OK') {
-          window.location.reload(); // Или лучше перейти на /users
-        } else {
-          alert('Ошибка при удалении');
+            if (result.success) {
+                M.toast({ html: 'Пользователь успешно удалён!', classes: 'green rounded' });
+                if (rowToRemove) rowToRemove.remove();
+                modal.close();
+            } else {
+                alert(result.error || 'Не удалось удалить пользователя');
+            }
+        } catch (err) {
+            console.error('AJAX ошибка:', err);
+            alert('Серверная ошибка при удалении');
         }
-      }
-    } catch (error) {
-      console.error('Ошибка:', error);
-      alert('Произошла ошибка при удалении пользователя');
-    }
-  });
+
+        userIdToDelete = null;
+    });
 });
 </script>
 
