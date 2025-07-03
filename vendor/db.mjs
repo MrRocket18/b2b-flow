@@ -66,15 +66,15 @@ export async function get_roles(ID) {
 }
 
 export async function createRequest(orderData) {
-
     try {
         const { user_id, item_name, count, price, link, desired_date, comment } = orderData;
-        // const formattedDate = formatDate(desired_date);
         const parsedCount = parseInt(count, 10);
         const parsedPrice = parseFloat(price);
 
         const [result] = await pool.query(
-            'INSERT INTO Request (user_id, item_name, count, price, link, desired_date, comment) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            `INSERT INTO Request 
+            (user_id, item_name, count, price, link, desired_date, comment, registration_date) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
             [user_id, item_name, parsedCount, parsedPrice, link, desired_date, comment || '']
         );
 
@@ -155,6 +155,7 @@ export async function GetArchived() {
     const [rows] = await pool.query(
       `SELECT 
         r.ID,
+        DATE_FORMAT(r.registration_date, '%d.%m.%Y') AS registration_date,
         DATE_FORMAT(r.delivery_date, '%d.%m.%Y') AS delivery_date,
         r.comment,
         CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
@@ -211,6 +212,7 @@ export async function GetAllRequest() {
       `SELECT 
         r.ID,
         r.user_id,
+        DATE_FORMAT(r.registration_date, '%d.%m.%Y') AS registration_date,
         CONCAT(u.last_name, ' ', u.first_name, ' ', IFNULL(u.midle_name, '')) AS user_fullname,
         r.item_name,
         r.count,
