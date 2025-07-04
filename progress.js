@@ -363,6 +363,35 @@ app.post('/edit/:ID', async (req, res) => {
     }
 });
 
+app.post('/edit-admin/:ID', async (req, res) => {
+    const id = req.params.ID;
+    console.log('ID:', id); 
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).json({ error: 'Неверный ID' });
+    }
+
+    try {
+        const updatedData = {
+            item_name: req.body.item_name,
+            count: Number(req.body.count),
+            status: Number(req.body.status),
+            delivery_date: req.body.delivery_date,
+            comment: req.body.comment
+        };
+        console.log(updatedData)
+        const success = await db.updateAdmRequestById(Number(id), updatedData);
+
+        if (success) {
+            return res.redirect('/manager')
+        } else {
+            return res.status(500).json({ error: 'Не удалось обновить заявку' });
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении заявки:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
 app.post('/delete-user', async (req, res) => {
     const id = req.body.id;
 

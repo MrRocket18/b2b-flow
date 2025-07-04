@@ -121,29 +121,7 @@
     </table>
   </div>
 
-  <!-- MODAL: изменение статуса -->
-  <div id="status-modal" class="modal">
-    <form method="POST" id="status-form">
-      <div class="modal-content">
-        <h5>Изменить статус заявки</h5>
-        <div class="input-field">
-          <select name="new_status" id="new-status-select" required>
-            <option value="" disabled selected>Выберите статус</option>
-            <option value="На рассмотрении">На рассмотрении</option>
-            <option value="Закупаем">Закупаем</option>
-            <option value="Ждём поставку">Ждём поставку</option>
-            <option value="Готово к получению">Готово к получению</option>
-            <option value="Получен">Получен</option>
-          </select>
-          <label for="new-status-select" class="active">Новый статус</label>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="modal-close btn blue darken-4">Сохранить</button>
-        <a class="modal-close btn-flat">Отмена</a>
-      </div>
-    </form>
-  </div>
+
 
   <!-- MODAL: редактирование заявки -->
   <div id="edit-modal" class="modal">
@@ -163,16 +141,17 @@
           <label for="edit-link" class="active">Ссылка в названии</label>
         </div>
         <div class="input-field">
-          <input id="edit-expected-date" name="expected_date" type="date">
-          <label for="edit-expected-date" class="active">Предполагаемая дата</label>
+          <input id="edit-delivery-date" name="delivery_date" type="date">
+          <label for="edit-delivery-date" class="active">Предполагаемая дата</label>
         </div>
         <div class="input-field">
           <select id="edit-status" name="status" required>
-            <option value="На рассмотрении">На рассмотрении</option>
-            <option value="Закупаем">Закупаем</option>
-            <option value="Ждём поставку">Ждём поставку</option>
-            <option value="Готово к получению">Готово к получению</option>
-            <option value="Получен">Получен</option>
+            <option value="0">На рассмотрении</option>
+            <option value="1">Закупаем</option>
+            <option value="2">Ждём поставку</option>
+            <option value="3">Готово к получению</option>
+            <option value="4">Получен</option>
+            <option value="5">Отменено</option>
           </select>
           <label for="edit-status" class="active">Статус</label>
         </div>
@@ -188,8 +167,9 @@
     </form>
   </div>
 
-    <script>
+  <script>
     document.addEventListener('DOMContentLoaded', function () {
+       M.AutoInit();
       // --- Инициализация Materialize ---
       const statusModal = M.Modal.init(document.getElementById('status-modal'));
       const editModal = M.Modal.init(document.getElementById('edit-modal'));
@@ -228,7 +208,6 @@
         const selectedStatus = statusFilter?.value || '';
 
         rows.forEach(row => {
-          // Поиск по тексту и статусу
           const text = row.innerText.toLowerCase();
           const statusSelect = row.querySelector('select[name="status"]');
           const matchesSearch = !term || text.includes(term);
@@ -322,31 +301,198 @@
       });
 
       // --- Логика модалки редактирования ---
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          const row = btn.closest('tr');
-          const a = row.querySelector('a');
-          const item = a.innerText.trim();
-          const link = a.href;
-          const cnt = row.querySelector('[data-field="count"]').innerText.trim();
-          const del = row.querySelector('input[name="delivery_date"]').value;
-          const stat = row.querySelector('select[name="status"]').value;
-          const com = row.querySelector('input[name="comment"]').value;
+   
 
-          document.getElementById('edit-item-name').value = item;
-          document.getElementById('edit-link').value = link;
-          document.getElementById('edit-count').value = cnt;
-          document.getElementById('edit-expected-date').value = del;
-          document.getElementById('edit-status').value = stat;
-          document.getElementById('edit-comment').value = com;
-          document.getElementById('edit-form').action = `/edit/${id}`;
+    // Глобальная переменная для хранения экземпляра модального окна
+    let modalInstance;
 
-          M.updateTextFields();
-          M.FormSelect.init(document.getElementById('edit-status'));
-          editModal.open();
+
+    const editButtons = document.querySelectorAll('.edit-btn');
+    console.log('editButtons:', editButtons);
+    const orderForm = document.getElementById('edit-form');
+    console.log('orderForm:', orderForm);
+
+    // Функция для открытия модального окна (Materialize CSS)
+    function openEditModal() {
+      const modal = document.getElementById('edit-modal'); // Изменено
+      if (modal) {
+        if (!modalInstance) {
+          modalInstance = M.Modal.getInstance(modal);
+          console.log('Modal instance created inside openEditModal:', modalInstance); // Проверяем создание экземпляра
+        }
+        console.log('About to open modal with:', modalInstance); // Before opening
+        modalInstance.open(); // Открываем модальное окно
+      } else {
+        console.error('Модальное окно с ID "edit-modal" не найдено в DOM.'); // Изменено
+        M.toast({ html: 'Не удалось открыть окно редактирования', classes: 'red rounded' });
+      }
+    }
+
+    editButtons.forEach(button => {
+        console.log('Found edit button:', button); // Проверяем, что кнопка найдена
+
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            console.log('Clicked edit button:', this);
+
+            const orderId = this.getAttribute('data-id');
+            console.log('orderId (from button):', orderId);
+
+
+            orderForm.action = `/edit-admin/${orderId}`; // Изменено:  Устанавливаем action формы
+
+            orderForm.setAttribute('data-order-id', orderId); // Store the orderId in the form
+
+            fetch(`/get-order/${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Заполнение формы редактирования
+                    const itemNameElement = document.getElementById('edit-item-name');
+                    console.log('itemNameElement:', itemNameElement);
+                    if (itemNameElement) {
+                        itemNameElement.value = data.item_name || '';
+                    } else {
+                        console.error('Элемент с id "edit-item-name" не найден.');
+                    }
+
+                    const countElement = document.getElementById('edit-count');
+                    console.log('countElement:', countElement);
+                    if (countElement) {
+                        countElement.value = data.count || '';
+                    } else {
+                        console.error('Элемент с id "edit-count" не найден.');
+                    }
+
+                    const linkElement = document.getElementById('edit-link');
+                    console.log('linkElement:', linkElement);
+                    if (linkElement) {
+                        linkElement.value = data.link || '';
+                    } else {
+                        console.error('Элемент с id "edit-link" не найден.');
+                    }
+
+                    if (data.delivery_date) {
+                      let desiredDateValue;
+                      if (data.delivery_date.includes('.')) {
+                        const [day, month, year] = data.delivery_date.split('.');
+                        if (day && month && year) {
+                          desiredDateValue = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        }
+                      } else {
+                        desiredDateValue = data.desired_date;
+                      }
+
+                      document.getElementById('edit-delivery-date').value = desiredDateValue || '';
+                    }
+
+                    const commentElement = document.getElementById('edit-comment');
+                    console.log('commentElement:', commentElement);
+                    if (commentElement) {
+                        commentElement.value = data.comment || '';
+                    } else {
+                        console.error('Элемент с id "edit-comment" не найден.');
+                    }
+
+                     const statusElement = document.getElementById('edit-status');
+                    console.log('statusElement', statusElement);
+
+                    if (statusElement) {
+                       statusElement.value = data.status || '0';
+                       //  M.FormSelect.init(statusElement);
+                       M.updateTextFields(); // Обновляем текстовые поля Materialize
+                    } else {
+                        console.error('Элемент с id "edit-status" не найден.')
+                    }
+
+                    // Открываем модальное окно
+                    openEditModal();
+
+                    // Инициализируем Materialize CSS (обновляем текстовые поля)
+                    M.updateTextFields(); // Обновляем текстовые поля Materialize
+
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке данных для редактирования:', error);
+                    M.toast({ html: 'Не удалось загрузить данные для редактирования.', classes: 'red rounded' });
+                });
         });
-      });
+    });
+
+    if (orderForm) {
+      orderForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(orderForm);
+            const method = orderForm.getAttribute('method') || 'POST';
+            const url = orderForm.action;
+
+            fetch(url, {
+                method: method,
+                body: formData,
+            })
+            .then(response => {
+                if (response.ok) {
+                  const isCreation = url.endsWith('/create'); 
+                  let redirectUrl = '/manager'; 
+
+                  if (isCreation) {
+                      redirectUrl += '?toast=create-success';
+                  } else {
+                      redirectUrl += '?toast=edit-success';
+                  }
+
+                  window.location.href = redirectUrl; 
+              } else {
+                console.error(`Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа:`, response.statusText);
+                M.toast({ html: `Ошибка при ${method === 'POST' ? 'создании' : 'обновлении'} заказа. Попробуйте позже.`, classes: 'red rounded' });
+            }
+        })
+            .catch(error => {
+                console.error('Сетевая ошибка:', error);
+                M.toast({ html: 'Ошибка сети. Не удалось выполнить операцию.', classes: 'red rounded' });
+            });
+        });
+    }
+
+    window.addEventListener('load', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const toastType = urlParams.get('toast');
+        console.log(toastType)
+        if (toastType === 'create-success') {
+            M.toast({ html: 'Новый заказ успешно создан!', classes: 'green rounded' });
+        } else if (toastType === 'edit-success') {
+            M.toast({ html: 'Заказ успешно отредактирован!', classes: 'green rounded' });
+        } else if (toastType === 'error') {
+            M.toast({ html: 'Произошла ошибка при выполнении операции с заказом.', classes: 'red rounded' });
+        }
+    });
+    
+
+     // Функция для очистки полей формы
+     function clearForm() {
+         document.getElementById('edit-item_name').value = '';
+         document.getElementById('edit-link').value = '';
+         document.getElementById('edit-count').value = '';
+         document.getElementById('edit-price').value = '';
+         document.getElementById('delivery_date').value = '';
+         document.getElementById('edit-comment').value = '';
+         document.getElementById('edit-status').value = '0'; // сбрасываем select на первое значение
+
+         M.updateTextFields(); // Обновляем текстовые поля Materialize после очистки
+
+         // Если у вас datepicker, необходимо сбросить и его
+        const dateInput = document.getElementById('delivery_date');
+        const datepickerInstance = M.Datepicker.getInstance(dateInput);
+        if (datepickerInstance) {
+            datepickerInstance.setDate(null); // очищаем выбранную дату
+        }
+    }
+
 
       // --- AJAX-обновление сводной таблицы по registration_date ---
       const dateFromInput = document.getElementById('date-from');
