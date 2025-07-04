@@ -103,7 +103,7 @@
                   </select>
                 </td>
                 <td data-field="comment">
-                  <input type="text" name="comment" maxlength="500" value="{{this.comment}}">
+                  <input type="text" name="comment" maxlength="500" value="{{this.comment}}" >
                 </td>
                 <td class="order-actions">
                   <button type="button" class="btn-flat tooltipped save-order-btn" data-tooltip="Сохранить изменения">
@@ -188,11 +188,11 @@
     </form>
   </div>
 
-  <script>
+    <script>
     document.addEventListener('DOMContentLoaded', function () {
       // --- Инициализация Materialize ---
-      const statusModal    = M.Modal.init(document.getElementById('status-modal'));
-      const editModal      = M.Modal.init(document.getElementById('edit-modal'));
+      const statusModal = M.Modal.init(document.getElementById('status-modal'));
+      const editModal = M.Modal.init(document.getElementById('edit-modal'));
       M.FormSelect.init(document.querySelectorAll('select'));
 
       // --- Ограничение на минимальную дату для delivery_date ---
@@ -215,59 +215,50 @@
         });
       });
 
-      // --- Фильтрация и сортировка ---
-      const searchInput  = document.getElementById('search-input');
+      // --- Фильтрация и сортировка заявок ---
+      const searchInput = document.getElementById('search-input');
       const statusFilter = document.getElementById('status-filter');
-      const dateFrom     = document.getElementById('date-from');
-      const dateTo       = document.getElementById('date-to');
-      let rows           = Array.from(document.querySelectorAll('#orders-body tr'));
-      let sortField      = null;
-      let sortAsc        = true;
+
+      let rows = Array.from(document.querySelectorAll('#orders-body tr'));
+      let sortField = null;
+      let sortAsc = true;
 
       function applyFilters() {
-        const term           = searchInput?.value.toLowerCase() || '';
+        const term = searchInput?.value.toLowerCase() || '';
         const selectedStatus = statusFilter?.value || '';
-        const from           = dateFrom?.value;
-        const to             = dateTo?.value;
 
         rows.forEach(row => {
-          // Фильтр по диапазону дат (desired_date)
-          const rowDate = row.querySelector('[data-field="desired_date"]').innerText.trim();
-          if (from && rowDate < from) { row.style.display = 'none'; return; }
-          if (to   && rowDate > to)   { row.style.display = 'none'; return; }
-
           // Поиск по тексту и статусу
-          const text          = row.innerText.toLowerCase();
-          const statusSelect  = row.querySelector('select[name="status"]');
+          const text = row.innerText.toLowerCase();
+          const statusSelect = row.querySelector('select[name="status"]');
           const matchesSearch = !term || text.includes(term);
-          const matchesStatus= !selectedStatus || (statusSelect && statusSelect.value === selectedStatus);
-          M.FormSelect.init(document.getElementById('edit-status'));
-M.updateTextFields();
+          const matchesStatus = !selectedStatus || (statusSelect && statusSelect.value === selectedStatus);
 
           row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
         });
+
+        M.FormSelect.init(document.getElementById('edit-status'));
+        M.updateTextFields();
       }
 
-      if (searchInput)  searchInput.addEventListener('input', applyFilters);
+      if (searchInput) searchInput.addEventListener('input', applyFilters);
       if (statusFilter) statusFilter.addEventListener('change', applyFilters);
-      if (dateFrom)     dateFrom.addEventListener('change', applyFilters);
-      if (dateTo)       dateTo.addEventListener('change', applyFilters);
 
       function sortTable(field) {
         const indexMap = {
-          item_name:     0,
-          count:         1,
-          price:         2,
-          desired_date:  3,
+          item_name: 0,
+          count: 1,
+          price: 2,
+          desired_date: 3,
           delivery_date: 5,
-          status:        6
+          status: 6
         };
         const colIndex = indexMap[field];
-        const sorted   = [...rows].sort((a, b) => {
+        const sorted = [...rows].sort((a, b) => {
           const aText = (a.cells[colIndex]?.innerText || '').trim();
           const bText = (b.cells[colIndex]?.innerText || '').trim();
-          const aNum  = parseFloat(aText.replace(',', '.'));
-          const bNum  = parseFloat(bText.replace(',', '.'));
+          const aNum = parseFloat(aText.replace(',', '.'));
+          const bNum = parseFloat(bText.replace(',', '.'));
           if (!isNaN(aNum) && !isNaN(bNum)) {
             return sortAsc ? aNum - bNum : bNum - aNum;
           }
@@ -292,28 +283,28 @@ M.updateTextFields();
         const btn = e.target.closest('.save-order-btn');
         if (!btn) return;
 
-        const row              = btn.closest('tr');
-        const form             = row.querySelector('form.order-form');
-        const orderId          = form.dataset.id;
-        const deliveryInput    = row.querySelector('[name="delivery_date"]');
-        const statusSelect     = row.querySelector('[name="status"]');
-        const commentInput     = row.querySelector('[name="comment"]');
+        const row = btn.closest('tr');
+        const form = row.querySelector('form.order-form');
+        const orderId = form.dataset.id;
+        const deliveryInput = row.querySelector('[name="delivery_date"]');
+        const statusSelect = row.querySelector('select[name="status"]');
+        const commentInput = row.querySelector('input[name="comment"]');
 
         const data = {
           delivery_date: deliveryInput.value,
-          status:        parseInt(statusSelect.value),
-          comment:       commentInput.value
+          status: parseInt(statusSelect.value),
+          comment: commentInput.value
         };
 
         try {
           const res = await fetch(`/admin-update/${orderId}`, {
-            method:  'POST',
-            headers: {'Content-Type':'application/json'},
-            body:    JSON.stringify(data)
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
           });
           const json = await res.json();
           if (json.success) {
-            M.toast({ html:'Изменения успешно сохранены', classes:'green darken-1 rounded' });
+            M.toast({ html: 'Изменения успешно сохранены', classes: 'green darken-1 rounded' });
             // Обновление отображения
             if (data.delivery_date) {
               row.querySelector('.formatted-date').textContent = data.delivery_date.split('-').reverse().join('.');
@@ -322,34 +313,34 @@ M.updateTextFields();
             rows = Array.from(document.querySelectorAll('#orders-body tr'));
             applyFilters();
           } else {
-            M.toast({ html: json.message||'Ошибка при сохранении', classes:'red darken-1 rounded' });
+            M.toast({ html: json.message || 'Ошибка при сохранении', classes: 'red darken-1 rounded' });
           }
         } catch (err) {
           console.error(err);
-          M.toast({ html:'Ошибка сети при сохранении', classes:'red darken-1 rounded' });
+          M.toast({ html: 'Ошибка сети при сохранении', classes: 'red darken-1 rounded' });
         }
       });
 
       // --- Логика модалки редактирования ---
       document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const id   = btn.dataset.id;
-          const row  = btn.closest('tr');
-          const a    = row.querySelector('a');
+          const id = btn.dataset.id;
+          const row = btn.closest('tr');
+          const a = row.querySelector('a');
           const item = a.innerText.trim();
           const link = a.href;
-          const cnt  = row.querySelector('[data-field="count"]').innerText.trim();
-          const del  = row.querySelector('input[name="delivery_date"]').value;
+          const cnt = row.querySelector('[data-field="count"]').innerText.trim();
+          const del = row.querySelector('input[name="delivery_date"]').value;
           const stat = row.querySelector('select[name="status"]').value;
-          const com  = row.querySelector('input[name="comment"]').value;
+          const com = row.querySelector('input[name="comment"]').value;
 
-          document.getElementById('edit-item-name').value     = item;
-          document.getElementById('edit-link').value          = link;
-          document.getElementById('edit-count').value         = cnt;
+          document.getElementById('edit-item-name').value = item;
+          document.getElementById('edit-link').value = link;
+          document.getElementById('edit-count').value = cnt;
           document.getElementById('edit-expected-date').value = del;
-          document.getElementById('edit-status').value        = stat;
-          document.getElementById('edit-comment').value       = com;
-          document.getElementById('edit-form').action         = `/edit/${id}`;
+          document.getElementById('edit-status').value = stat;
+          document.getElementById('edit-comment').value = com;
+          document.getElementById('edit-form').action = `/edit/${id}`;
 
           M.updateTextFields();
           M.FormSelect.init(document.getElementById('edit-status'));
@@ -357,6 +348,42 @@ M.updateTextFields();
         });
       });
 
+      // --- AJAX-обновление сводной таблицы по registration_date ---
+      const dateFromInput = document.getElementById('date-from');
+      const dateToInput = document.getElementById('date-to');
+
+      function updateSummaryTable() {
+        const from = dateFromInput.value;
+        const to = dateToInput.value;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('dateFrom', from);
+        url.searchParams.set('dateTo', to);
+
+        fetch(url.toString(), {
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          const summaryRow = document.querySelector('.summary-table tbody tr');
+          if (summaryRow && data.summary.length > 0) {
+            const s = data.summary[0];
+            summaryRow.innerHTML = `
+              <td>${s.new}</td>
+              <td>${s.processing}</td>
+              <td>${s.completed}</td>
+              <td>${s.cancelled}</td>
+              <td>${s.total}</td>
+            `;
+          }
+        })
+        .catch(err => console.error("Ошибка загрузки сводной таблицы", err));
+      }
+
+      dateFromInput.addEventListener('change', updateSummaryTable);
+      dateToInput.addEventListener('change', updateSummaryTable);
     });
   </script>
 </div>
