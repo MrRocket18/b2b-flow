@@ -26,8 +26,8 @@
     <table class="highlight responsive-table">
       <thead>
         <tr>
-          <th>ID Заказа</th>
-          <th>Дата оформления</th>
+          <th class="sortable" data-sort="ID">ID Заказа</th>
+          <th class="sortable" data-sort="registration_date">Дата оформления</th>
           <th>Дата доставки</th>
           <th>Пользователь</th>
           <th>Сумма</th>
@@ -156,5 +156,37 @@
         alert('Серверная ошибка');
       }
     });
+    
+    let sortAsc = true;
+    let sortField = null;
+    document.querySelectorAll('.sortable').forEach(th => {
+          th.addEventListener('click', () => {
+            const field = th.getAttribute('data-sort');
+            sortAsc = (sortField === field) ? !sortAsc : true;
+            sortField = field;
+            sortTable(field);
+          });
+      });
+      
+    function sortTable(field) {
+          const indexMap = {
+            ID: 0,
+            registration_date: 1
+          };
+          const colIndex = indexMap[field];
+          const sorted = [...rows].sort((a, b) => {
+            const aText = (a.cells[colIndex]?.innerText || '').trim();
+            const bText = (b.cells[colIndex]?.innerText || '').trim();
+            const aNum = parseFloat(aText.replace(',', '.'));
+            const bNum = parseFloat(bText.replace(',', '.'));
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+              return sortAsc ? aNum - bNum : bNum - aNum;
+            }
+            return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+          });
+          const tbody = document.getElementById('archive-body');
+          tbody.innerHTML = '';
+          sorted.forEach(r => tbody.appendChild(r));
+      }
   });
 </script>

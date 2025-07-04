@@ -214,19 +214,22 @@ app.get('/manager', async (req, res) => {
     const today = new Date();
     const todayDate = today.toISOString().slice(0, 10);
 
-    const { dateFrom, dateTo } = req.query;
+    const dateFrom = req.query.dateFrom || null;
+    const dateTo = req.query.dateTo || null;
 
-    const requests = await db.GetAllRequest(); // Таблица заказов остаётся без изменений
-    const summary = await db.GetAllStatuses(dateFrom, dateTo); // Сводная таблица с фильтром
+    const requests = await db.GetAllRequest(); // Все заявки
+    const summary = await db.GetAllStatuses(dateFrom, dateTo); // С учётом фильтра
 
-    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+    // Если это AJAX-запрос
+    if (req.xhr || req.headers.accept && req.headers.accept.includes('application/json')) {
       return res.json({ summary });
     }
 
+    // Обычный запрос — рендерим страницу
     res.render('all_applic', {
       session: req.session,
       role: req.session.role,
-      title: 'My requests',
+      title: 'Все заказы',
       summary: summary,
       requests: requests,
       todayDate: todayDate
@@ -354,35 +357,6 @@ app.post('/edit/:ID', async (req, res) => {
 
         if (success) {
             return res.redirect('/applications')
-        } else {
-            return res.status(500).json({ error: 'Не удалось обновить заявку' });
-        }
-    } catch (error) {
-        console.error('Ошибка при обновлении заявки:', error);
-        res.status(500).json({ error: 'Ошибка сервера' });
-    }
-});
-
-app.post('/edit-admin/:ID', async (req, res) => {
-    const id = req.params.ID;
-    console.log('ID:', id); 
-    if (!id || isNaN(Number(id))) {
-        return res.status(400).json({ error: 'Неверный ID' });
-    }
-
-    try {
-        const updatedData = {
-            item_name: req.body.item_name,
-            count: Number(req.body.count),
-            status: Number(req.body.status),
-            delivery_date: req.body.delivery_date,
-            comment: req.body.comment
-        };
-        console.log(updatedData)
-        const success = await db.updateAdmRequestById(Number(id), updatedData);
-
-        if (success) {
-            return res.redirect('/manager')
         } else {
             return res.status(500).json({ error: 'Не удалось обновить заявку' });
         }

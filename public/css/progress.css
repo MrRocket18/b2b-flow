@@ -521,3 +521,39 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #date-from, #date-to {
   color: white !important;
 }
+
+/* Черный цвет для текста поля "Количество" */
+#edit-count {
+  color: black;
+}
+
+/* Цвет текста в выпадающем списке "Фильтр по статусу" */
+.select-wrapper #status-filter + .select-dropdown {
+  color: white !important;
+}
+
+/* Цвет текста во всех опциях выпадающего списка */
+#status-filter option {
+  color: white !important;
+}
+
+/* Цвет метки (label) для фильтра по статусу */
+#status-filter + label.active,
+#status-filter + label {
+  color: white !important;
+}
+/* Цвет текста в выпадающем списке Materialize */
+.select-wrapper #edit-status + .select-dropdown {
+  color: black !important;
+}
+
+/* Цвет текста во всех опциях выпадающего списка */
+#edit-status option {
+  color: black !important;
+}
+
+/* Цвет метки (label) для статуса */
+.edit-status-label,
+#edit-status + label.active {
+  color: black !important;
+}
