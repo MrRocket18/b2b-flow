@@ -223,7 +223,6 @@ body {
 }
 
 .select-wrapper input.select-dropdown {
-
     color: white;
 }
 
@@ -507,12 +506,12 @@ h1 {
   padding: 0.5rem 0;
 }
 
-
+/* 
 input:not([type]), input[type=password]:not(.browser-default), input[type=email]:not(.browser-default), input[type=url]:not(.browser-default), input[type=time]:not(.browser-default), input[type=datetime]:not(.browser-default), input[type=datetime-local]:not(.browser-default), input[type=tel]:not(.browser-default), input[type=number]:not(.browser-default), input[type=search]:not(.browser-default), textarea.materialize-textarea
 
  {
    color: #fff;
-}
+} */
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   opacity: 0.8;
@@ -556,4 +555,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .edit-status-label,
 #edit-status + label.active {
   color: black !important;
+}
+
+
+input:not([type]), input[type=password]:not(.browser-default), input[type=email]:not(.browser-default), input[type=url]:not(.browser-default), input[type=time]:not(.browser-default), input[type=datetime]:not(.browser-default), input[type=datetime-local]:not(.browser-default), input[type=tel]:not(.browser-default), input[type=number]:not(.browser-default), input[type=search]:not(.browser-default), textarea.materialize-textarea {
+    color: #000000;
+}
+
+.modal-content .select-wrapper input.select-dropdown {
+    color: #000000;
+    top: 0;
+}
+
+.modal-content .select-wrapper+label {
+    top: 0;
 }
