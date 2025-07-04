@@ -448,7 +448,7 @@
             event.preventDefault();
 
             const formData = new FormData(orderForm);
-            const method = orderForm.getAttribute('method') || 'POST';
+            const method = orderForm.getAttribute('method') || 'POST';//
             const url = orderForm.action;
 
             fetch(url, {
