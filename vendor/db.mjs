@@ -291,20 +291,36 @@ export async function updateStatusById(id, { status }) {
     }
 }
 
-export async function GetAllStatuses() {
+export async function GetAllStatuses(dateFrom = null, dateTo = null) {
   try {
-    const [rows] = await pool.query(
-      `SELECT
-    COUNT(IF(status = 0, 1, NULL)) AS new,
-    COUNT(IF(status BETWEEN 1 AND 3, 1, NULL)) AS processing,
-    COUNT(IF(status = 4, 1, NULL)) AS completed,
-    COUNT(IF(status = 5, 1, NULL)) AS cancelled,
-    COUNT(*) AS total
-    FROM Request`
-    );
+    let query = `
+      SELECT
+        COUNT(IF(status = 0, 1, NULL)) AS new,
+        COUNT(IF(status BETWEEN 1 AND 3, 1, NULL)) AS processing,
+        COUNT(IF(status = 4, 1, NULL)) AS completed,
+        COUNT(IF(status = 5, 1, NULL)) AS cancelled,
+        COUNT(*) AS total
+      FROM Request
+    `;
+    const params = [];
+
+    if (dateFrom || dateTo) {
+      query += " WHERE";
+      if (dateFrom) {
+        query += " DATE(registration_date) >= ?";
+        params.push(dateFrom);
+      }
+      if (dateTo) {
+        if (dateFrom) query += " AND";
+        query += " DATE(registration_date) <= ?";
+        params.push(dateTo);
+      }
+    }
+
+    const [rows] = await pool.query(query, params);
     return rows;
   } catch (error) {
-    console.error('Ошибка при получении данных о товаре по ID:', error);
-    throw error; 
+    console.error('Ошибка при получении данных о статусах:', error);
+    throw error;
   }
 }

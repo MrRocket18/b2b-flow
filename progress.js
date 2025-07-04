@@ -205,16 +205,24 @@ app.get('/get-order/:id', async (req,res)=> {
   res.json(request) 
 })
 app.get('/manager', async (req, res) => {
-  if(req.session.role != 1){
+  if (req.session.role != 1) {
     console.log(`Попытка доступа к странице ${req._parsedOriginalUrl.pathname} пользователем с ролью ${req.session.role}`)
     return res.redirect('/applications');
-  } 
-  try {
+  }
 
+  try {
     const today = new Date();
     const todayDate = today.toISOString().slice(0, 10);
-    const requests = await db.GetAllRequest();
-    const summary = await db.GetAllStatuses();
+
+    const { dateFrom, dateTo } = req.query;
+
+    const requests = await db.GetAllRequest(); // Таблица заказов остаётся без изменений
+    const summary = await db.GetAllStatuses(dateFrom, dateTo); // Сводная таблица с фильтром
+
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      return res.json({ summary });
+    }
+
     res.render('all_applic', {
       session: req.session,
       role: req.session.role,
@@ -223,9 +231,10 @@ app.get('/manager', async (req, res) => {
       requests: requests,
       todayDate: todayDate
     });
-  } catch (error) { 
+
+  } catch (error) {
     console.error("Ошибка при получении заявок:", error);
-    res.status(500).send("Ошибка сервера при получении заявок."); 
+    res.status(500).send("Ошибка сервера при получении заявок.");
   }
 });
 
