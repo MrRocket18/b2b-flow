@@ -317,10 +317,19 @@ export async function GetAllStatuses(dateFrom = null, dateTo = null) {
     let query = `
       SELECT
         COUNT(IF(status = 0, 1, NULL)) AS new,
+        SUM(IF(status = 0, price * count, 0)) AS sum_new,
+
         COUNT(IF(status BETWEEN 1 AND 3, 1, NULL)) AS processing,
+        SUM(IF(status BETWEEN 1 AND 3, price * count, 0)) AS sum_processing,
+
         COUNT(IF(status = 4, 1, NULL)) AS completed,
+        SUM(IF(status = 4, price * count, 0)) AS sum_completed,
+
         COUNT(IF(status = 5, 1, NULL)) AS cancelled,
-        COUNT(*) AS total
+        SUM(IF(status = 5, price * count, 0)) AS sum_cancelled,
+
+        COUNT(*) AS total,
+        SUM(price * count) AS sum_total
       FROM Request
     `;
     const params = [];
@@ -339,7 +348,18 @@ export async function GetAllStatuses(dateFrom = null, dateTo = null) {
     }
 
     const [rows] = await pool.query(query, params);
-    return rows;
+
+    // ВСЕГДА добавляем форматированные значения
+    const summary = rows.map(row => ({
+      ...row,
+      sum_new_formatted: (parseFloat(row.sum_new || 0)).toFixed(2),
+      sum_processing_formatted: (parseFloat(row.sum_processing || 0)).toFixed(2),
+      sum_completed_formatted: (parseFloat(row.sum_completed || 0)).toFixed(2),
+      sum_cancelled_formatted: (parseFloat(row.sum_cancelled || 0)).toFixed(2),
+      sum_total_formatted: (parseFloat(row.sum_total || 0)).toFixed(2)
+    }));
+
+    return summary;
   } catch (error) {
     console.error('Ошибка при получении данных о статусах:', error);
     throw error;

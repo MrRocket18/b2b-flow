@@ -27,13 +27,25 @@
         </tr>
       </thead>
       <tbody>
+        <!-- Строка с количеством заказов -->
         <tr>
           {{#each summary}}
             <td>{{this.new}}</td>
             <td>{{this.processing}}</td>
             <td>{{this.completed}}</td>
             <td>{{this.cancelled}}</td>
-            <td>{{this.total}}</td>
+            <td>{{this.total}} </td>
+          {{/each}}
+        </tr>
+
+        <!-- Строка с суммами -->
+        <tr>
+          {{#each summary}}
+            <td>{{this.sum_new_formatted}} ₽</td>
+            <td>{{this.sum_processing_formatted}} ₽</td>
+            <td>{{this.sum_completed_formatted}} ₽</td>
+            <td>{{this.sum_cancelled_formatted}} ₽</td>
+            <td>{{this.sum_total_formatted}} ₽</td>
           {{/each}}
         </tr>
       </tbody>
@@ -144,7 +156,7 @@
           <input id="edit-delivery-date" name="delivery_date" type="date">
           <label for="edit-delivery-date" class="active">Предполагаемая дата</label>
         </div>
-        <div class="input-field">
+          <div class="input-field">
           <select id="edit-status" name="status" required>
             <option value="0">На рассмотрении</option>
             <option value="1">Закупаем</option>
@@ -153,7 +165,8 @@
             <option value="4">Получен</option>
             <option value="5">Отменено</option>
           </select>
-          <label for="edit-status" class="active">Статус</label>
+          <!-- Добавлен уникальный класс или ID -->
+          <label for="edit-status" class="active edit-status-label" id="edit-status-label">Статус</label>
         </div>
         <div class="input-field">
           <input id="edit-comment" name="comment" type="text">
@@ -398,7 +411,14 @@
                         console.error('Элемент с id "edit-comment" не найден.');
                     }
 
-                     const statusElement = document.getElementById('edit-status');
+                    const statusElement = document.getElementById('edit-status');
+                      if (statusElement) {
+                        statusElement.value = data.status || '0';
+                        M.FormSelect.init(statusElement); // <-- ОСНОВНАЯ ИСПРАВЛЯЮЩАЯ СТРОКА
+                        M.updateTextFields();
+                      } else {
+                        console.error('Элемент с id "edit-status" не найден.');
+                      }
                     console.log('statusElement', statusElement);
 
                     if (statusElement) {
@@ -501,7 +521,6 @@
       function updateSummaryTable() {
         const from = dateFromInput.value;
         const to = dateToInput.value;
-
         const url = new URL(window.location.href);
         url.searchParams.set('dateFrom', from);
         url.searchParams.set('dateTo', to);
@@ -513,15 +532,27 @@
         })
         .then(res => res.json())
         .then(data => {
-          const summaryRow = document.querySelector('.summary-table tbody tr');
-          if (summaryRow && data.summary.length > 0) {
+          const summaryRows = document.querySelectorAll('.summary-table tbody tr');
+
+          if (data.summary.length > 0) {
             const s = data.summary[0];
-            summaryRow.innerHTML = `
+
+            // Первая строка: количество
+            summaryRows[0].innerHTML = `
               <td>${s.new}</td>
               <td>${s.processing}</td>
               <td>${s.completed}</td>
               <td>${s.cancelled}</td>
               <td>${s.total}</td>
+            `;
+
+            // Вторая строка: суммы
+            summaryRows[1].innerHTML = `
+              <td>${s.sum_new_formatted} ₽</td>
+              <td>${s.sum_processing_formatted} ₽</td>
+              <td>${s.sum_completed_formatted} ₽</td>
+              <td>${s.sum_cancelled_formatted} ₽</td>
+              <td>${s.sum_total_formatted} ₽</td>
             `;
           }
         })
@@ -546,6 +577,9 @@ body:has(.modal.open)::before {
   z-index: 998;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(2px);
+}
+#edit-status {
+  color: black;
 }
 
 </style>
