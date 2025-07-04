@@ -120,6 +120,7 @@ export async function GetRequestById(id) {
       price, 
       link, 
       DATE_FORMAT(desired_date, '%d.%m.%Y') AS desired_date, 
+      DATE_FORMAT(delivery_date, '%d.%m.%Y') AS delivery_date, 
       comment 
       FROM Request WHERE id = ?`, 
       [id] 
@@ -140,6 +141,26 @@ export async function updateRequestById(id, updatedData) {
         const query = `UPDATE Request SET item_name = ?, count = ?, price = ?, desired_date = ?, comment = ? WHERE id = ?`;
 
         const values = [updatedData.item_name, count, price, updatedData.desired_date, updatedData.comment, id]; 
+
+        const [result] = await pool.execute(query, values);
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Ошибка при обновлении заявки:', error);
+        throw error;
+    }
+}
+
+export async function updateAdmRequestById(id, updatedData) {
+    try {
+        const count = Number(updatedData.count);
+        const status = Number(updatedData.status);
+
+        //const desiredDate = formatDate(updatedData.desired_date);
+        
+        const query = `UPDATE Request SET item_name = ?, count = ?, status = ?, delivery_date = ?, comment = ? WHERE id = ?`;
+
+        const values = [updatedData.item_name, count, status, updatedData.delivery_date, updatedData.comment, id]; 
 
         const [result] = await pool.execute(query, values);
 
