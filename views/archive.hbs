@@ -1,18 +1,21 @@
 {{!-- views/archive.hbs --}}
-
 <div class="orders-page-container">
   <div class="header-section">
     <h1 class="page-title">Архив заказов</h1>
 
     <div class="filter-wrapper">
-      <div class="filter-section">
-        <div class="filter-item active"><span>Все полученные заказы</span></div>
-        <div class="filter-item"><span>За последний месяц</span></div>
-        <div class="filter-item"><span>За последний год</span></div>
-      </div>
-
       <div class="search-container input-field">
-        <input id="search" type="text" placeholder="Поиск по архиву заказов...">
+        <input id="search-input" type="text" placeholder="Поиск по архиву заказов...">
+      </div>
+      <div class="row" style="margin-bottom: 0; margin-right: 0;">
+        <div class="input-field col s6 m6">
+          <input type="date" id="date-from">
+          <label for="date-from" class="active">От</label>
+        </div>
+        <div class="input-field col s6 m6">
+          <input type="date" id="date-to">
+          <label for="date-to" class="active">До</label>
+        </div>
       </div>
     </div>
   </div>
@@ -23,8 +26,8 @@
     <table class="highlight responsive-table">
       <thead>
         <tr>
-          <th>ID Заказа</th>
-          <th>Дата оформления</th>
+          <th class="sortable" data-sort="ID">ID Заказа</th>
+          <th class="sortable" data-sort="registration_date">Дата оформления</th>
           <th>Дата доставки</th>
           <th>Пользователь</th>
           <th>Сумма</th>
@@ -37,8 +40,8 @@
         {{#each arch}}
         <tr>
           <td>{{ID}}</td>
-          <td>{{registration_date}}</td>
-          <td>{{delivery_date}}</td>
+          <td data-field="registration_date">{{registration_date}}</td>
+          <td data-field="delivery_date">{{delivery_date}}</td>
           <td>{{user_fullname}}</td>
           <td>{{total}} ₽</td>
           <td>
@@ -55,12 +58,12 @@
             </select>
           </td>
           <td>
-            <button type="button" class="btn-flat update-status-btn" data-id="{{ID}}" >
+            <button type="button" class="btn-flat update-status-btn" data-id="{{ID}}">
               <i class="material-icons green-text">check</i>
             </button>
           </td>
         </tr>
-      {{/each}}
+        {{/each}}
       </tbody>
     </table>
   </div>
@@ -70,57 +73,120 @@
   document.addEventListener('DOMContentLoaded', function () {
     M.AutoInit();
 
-    document.querySelectorAll('.filter-item').forEach(item => {
-      item.addEventListener('click', function () {
-        document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
+    // --- Элементы ---
+    const searchInput = document.getElementById('search-input');
+    const dateFromInput = document.getElementById('date-from');
+    const dateToInput = document.getElementById('date-to');
+    let rows = Array.from(document.querySelectorAll('#archive-body tr'));
 
-    // Обработчик клика по кнопке "Сохранить"
-    document.addEventListener('click', async function (e) {
-        const button = e.target.closest('.update-status-btn');
-        if (!button) return;
+    // --- Парсинг даты из DD.MM.YYYY в объект Date ---
+    function parseDate(dateStr) {
+      if (!dateStr) return null;
+      const [day, month, year] = dateStr.split('.').map(Number);
+      const date = new Date(year, month - 1, day); // Месяцы в JS начинаются с 0
+      return isNaN(date.getTime()) ? null : date; // Проверка на корректную дату
+    }
 
-        const orderId = button.dataset.id;
-        const row = button.closest('tr');
-        const select = row.querySelector('select[name="status"]');
-        const newStatus = select.value;
+    // --- Функция фильтрации ---
+    function applyFilters() {
+      const term = searchInput?.value.toLowerCase() || '';
+      let fromDate = dateFromInput?.value ? new Date(dateFromInput.value) : null;
+      if (fromDate) {
+        fromDate.setDate(fromDate.getDate() - 1);
+      }
+      const toDate = dateToInput?.value ? new Date(dateToInput.value) : null;
 
-        try {
-            const response = await fetch(`/archive-update/${orderId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status: newStatus })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                M.toast({ html: 'Статус успешно изменён!', classes: 'green rounded' });
-                row.remove();
-            } else {
-                alert('Ошибка: ' + (result.error || 'Не удалось изменить статус'));
-            }
-        } catch (err) {
-            console.error('AJAX ошибка:', err);
-            alert('Серверная ошибка');
-        }
-    });
-  
-
-    // Поиск
-    const searchInput = document.getElementById('search');
-    const rows = Array.from(document.querySelectorAll('#archive-body tr'));
-
-    searchInput.addEventListener('input', function () {
-      const query = this.value.toLowerCase();
       rows.forEach(row => {
+        // Получаем registration_date из таблицы
+        const regDateStr = row.querySelector('[data-field="registration_date"]')?.innerText.trim();
+        const regDate = parseDate(regDateStr);
+
+        let showRow = true;
+
+        // Фильтр по "От" (включительно)
+        if (fromDate && regDate && regDate < fromDate) {
+          showRow = false;
+        }
+
+        // Фильтр по "До" (включительно)
+        if (toDate && regDate && regDate > toDate) {
+          showRow = false;
+        }
+
+        // Поиск по тексту
         const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(query) ? '' : 'none';
+        const matchesSearch = !term || text.includes(term);
+
+        row.style.display = (showRow && matchesSearch) ? '' : 'none';
       });
+    }
+
+    // --- Подписка на события ---
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (dateFromInput) dateFromInput.addEventListener('change', applyFilters);
+    if (dateToInput) dateToInput.addEventListener('change', applyFilters);
+
+    // --- Кнопка обновления статуса ---
+    document.addEventListener('click', async function (e) {
+      const button = e.target.closest('.update-status-btn');
+      if (!button) return;
+
+      const orderId = button.dataset.id;
+      const row = button.closest('tr');
+      const select = row.querySelector('select[name="status"]');
+      const newStatus = select.value;
+
+      try {
+        const response = await fetch(`/archive-update/${orderId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          M.toast({ html: 'Статус успешно изменён!', classes: 'green darken-1 rounded' });
+          row.remove();
+        } else {
+          alert('Ошибка: ' + (result.error || 'Не удалось изменить статус'));
+        }
+      } catch (err) {
+        console.error('AJAX ошибка:', err);
+        alert('Серверная ошибка');
+      }
     });
+    
+    let sortAsc = true;
+    let sortField = null;
+    document.querySelectorAll('.sortable').forEach(th => {
+          th.addEventListener('click', () => {
+            const field = th.getAttribute('data-sort');
+            sortAsc = (sortField === field) ? !sortAsc : true;
+            sortField = field;
+            sortTable(field);
+          });
+      });
+      
+    function sortTable(field) {
+          const indexMap = {
+            ID: 0,
+            registration_date: 1
+          };
+          const colIndex = indexMap[field];
+          const sorted = [...rows].sort((a, b) => {
+            const aText = (a.cells[colIndex]?.innerText || '').trim();
+            const bText = (b.cells[colIndex]?.innerText || '').trim();
+            const aNum = parseFloat(aText.replace(',', '.'));
+            const bNum = parseFloat(bText.replace(',', '.'));
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+              return sortAsc ? aNum - bNum : bNum - aNum;
+            }
+            return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+          });
+          const tbody = document.getElementById('archive-body');
+          tbody.innerHTML = '';
+          sorted.forEach(r => tbody.appendChild(r));
+      }
   });
 </script>

@@ -120,6 +120,7 @@ export async function GetRequestById(id) {
       price, 
       link, 
       DATE_FORMAT(desired_date, '%d.%m.%Y') AS desired_date, 
+      DATE_FORMAT(delivery_date, '%d.%m.%Y') AS delivery_date, 
       comment 
       FROM Request WHERE id = ?`, 
       [id] 
@@ -140,6 +141,26 @@ export async function updateRequestById(id, updatedData) {
         const query = `UPDATE Request SET item_name = ?, count = ?, price = ?, desired_date = ?, comment = ? WHERE id = ?`;
 
         const values = [updatedData.item_name, count, price, updatedData.desired_date, updatedData.comment, id]; 
+
+        const [result] = await pool.execute(query, values);
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Ошибка при обновлении заявки:', error);
+        throw error;
+    }
+}
+
+export async function updateAdmRequestById(id, updatedData) {
+    try {
+        const count = Number(updatedData.count);
+        const status = Number(updatedData.status);
+
+        //const desiredDate = formatDate(updatedData.desired_date);
+        
+        const query = `UPDATE Request SET item_name = ?, count = ?, status = ?, delivery_date = ?, comment = ? WHERE id = ?`;
+
+        const values = [updatedData.item_name, count, status, updatedData.delivery_date, updatedData.comment, id]; 
 
         const [result] = await pool.execute(query, values);
 
@@ -291,20 +312,56 @@ export async function updateStatusById(id, { status }) {
     }
 }
 
-export async function GetAllStatuses() {
+export async function GetAllStatuses(dateFrom = null, dateTo = null) {
   try {
-    const [rows] = await pool.query(
-      `SELECT
-    COUNT(IF(status = 0, 1, NULL)) AS new,
-    COUNT(IF(status BETWEEN 1 AND 3, 1, NULL)) AS processing,
-    COUNT(IF(status = 4, 1, NULL)) AS completed,
-    COUNT(IF(status = 5, 1, NULL)) AS cancelled,
-    COUNT(*) AS total
-    FROM Request`
-    );
-    return rows;
+    let query = `
+      SELECT
+        COUNT(IF(status = 0, 1, NULL)) AS new,
+        SUM(IF(status = 0, price * count, 0)) AS sum_new,
+
+        COUNT(IF(status BETWEEN 1 AND 3, 1, NULL)) AS processing,
+        SUM(IF(status BETWEEN 1 AND 3, price * count, 0)) AS sum_processing,
+
+        COUNT(IF(status = 4, 1, NULL)) AS completed,
+        SUM(IF(status = 4, price * count, 0)) AS sum_completed,
+
+        COUNT(IF(status = 5, 1, NULL)) AS cancelled,
+        SUM(IF(status = 5, price * count, 0)) AS sum_cancelled,
+
+        COUNT(*) AS total,
+        SUM(price * count) AS sum_total
+      FROM Request
+    `;
+    const params = [];
+
+    if (dateFrom || dateTo) {
+      query += " WHERE";
+      if (dateFrom) {
+        query += " DATE(registration_date) >= ?";
+        params.push(dateFrom);
+      }
+      if (dateTo) {
+        if (dateFrom) query += " AND";
+        query += " DATE(registration_date) <= ?";
+        params.push(dateTo);
+      }
+    }
+
+    const [rows] = await pool.query(query, params);
+
+    // ВСЕГДА добавляем форматированные значения
+    const summary = rows.map(row => ({
+      ...row,
+      sum_new_formatted: (parseFloat(row.sum_new || 0)).toFixed(2),
+      sum_processing_formatted: (parseFloat(row.sum_processing || 0)).toFixed(2),
+      sum_completed_formatted: (parseFloat(row.sum_completed || 0)).toFixed(2),
+      sum_cancelled_formatted: (parseFloat(row.sum_cancelled || 0)).toFixed(2),
+      sum_total_formatted: (parseFloat(row.sum_total || 0)).toFixed(2)
+    }));
+
+    return summary;
   } catch (error) {
-    console.error('Ошибка при получении данных о товаре по ID:', error);
-    throw error; 
+    console.error('Ошибка при получении данных о статусах:', error);
+    throw error;
   }
 }
