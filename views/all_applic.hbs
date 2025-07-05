@@ -58,7 +58,7 @@
       <input type="text" id="search-input" placeholder="Поиск названию, пользователю, дате">
     </div>
     <div class="input-field col s6 m6">
-      <select id="status-filter">
+      <select id="status-filter" >
         <option value="">Все статусы</option>
         <option value="0">На рассмотрении</option>
         <option value="1">Закупаем</option>
@@ -67,7 +67,7 @@
         <option value="4">Получен</option>
         <option value="5">Отменено</option>
       </select>
-      <label for="status-filter">Фильтр по статусу</label>
+      <label for="status-filter" class="wht-text">Фильтр по статусу</label>
     </div>
   </div>
 
@@ -157,7 +157,7 @@
           <label for="edit-delivery-date" class="active">Предполагаемая дата</label>
         </div>
           <div class="input-field">
-          <select id="edit-status" name="status" required>
+          <select id="edit-status" style="top: 0;" name="status" required>
             <option value="0">На рассмотрении</option>
             <option value="1">Закупаем</option>
             <option value="2">Ждём поставку</option>
@@ -350,7 +350,7 @@
 
             const orderId = this.getAttribute('data-id');
             console.log('orderId (from button):', orderId);
-
+  
 
             orderForm.action = `/edit-admin/${orderId}`; // Изменено:  Устанавливаем action формы
 
